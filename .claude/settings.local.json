@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(update-config)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(printf 'y\\\\n')",
+      "Bash(npx shadcn@latest init --defaults)"
+    ]
+  }
+}
