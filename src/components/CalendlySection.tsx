@@ -63,7 +63,7 @@ function CalendlyPlaceholder() {
 }
 
 export default function CalendlySection() {
-  const hasCalendly = JAIME.calendly && JAIME.calendly !== '#'
+  const hasCalendly = (JAIME.calendly as string) !== '#'
   const width = useWindowWidth()
   const isMobile = width < 768
 

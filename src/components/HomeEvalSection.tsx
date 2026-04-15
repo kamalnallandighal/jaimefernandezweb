@@ -232,7 +232,7 @@ export default function HomeEvalSection() {
   const isMobile = width < 768
 
   const [step,        setStep]        = useState<Step>(1)
-  const [direction,   setDirection]   = useState(1)
+  const [_direction,  setDirection]   = useState(1)
   const [submitted,   setSubmitted]   = useState(false)
   const [submitting,  setSubmitting]  = useState(false)
   const [animating,   setAnimating]   = useState(false)
