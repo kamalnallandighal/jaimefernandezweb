@@ -35,7 +35,7 @@ const underlineInput: React.CSSProperties = {
 }
 
 // ─── Isolated address input ───────────────────────────────────────────────────
-// Uses PlaceAutocompleteElement (new Places API, v=alpha).
+// Uses PlaceAutocompleteElement (new Places API, v=weekly).
 // The PAC element IS its own input — appended into containerRef.
 // confirmedRef avoids stale-closure reads inside event listeners.
 // Step 1 is never unmounted (display:block/none) — see parent JSX.
@@ -56,10 +56,10 @@ function AddressInput({ onConfirmed, onCleared }: AddressInputProps) {
     // ── Fallback: no key → skip PAC entirely (handled in JSX below)
     if (!PLACES_KEY) return
 
-    // ── Load Maps script once (v=alpha required for PlaceAutocompleteElement)
+    // ── Load Maps script once
     if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
       const s = document.createElement('script')
-      s.src = `https://maps.googleapis.com/maps/api/js?key=${PLACES_KEY}&v=alpha&loading=async`
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${PLACES_KEY}&v=weekly&loading=async`
       s.async = true
       document.head.appendChild(s)
     }
