@@ -31,7 +31,9 @@
       "Bash(mkdir -p /Users/knallandighal/Documents/Websites/jaime-fernandez/public/assets/videos)",
       "Bash(cp ~/Desktop/movie.mov /Users/knallandighal/Documents/Websites/jaime-fernandez/public/assets/videos/hero.mov)",
       "Bash(npx vite:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   },
   "enableAllProjectMcpServers": true
