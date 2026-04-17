@@ -111,11 +111,18 @@ export default function App() {
   )
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
+
 function AppShell() {
   const location = useLocation()
   const isAdmin = location.pathname === '/blog/admin'
   return (
     <>
+      <ScrollToTop />
       {!isAdmin && <StickyHeader />}
         <Routes>
           <Route path="/" element={<HomePage />} />
