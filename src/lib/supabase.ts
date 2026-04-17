@@ -25,6 +25,7 @@ export type Post = {
   seo_title: string | null
   seo_description: string | null
   read_time_minutes: number | null
+  featured: boolean
 }
 
 /*
@@ -45,7 +46,8 @@ create table posts (
   updated_at timestamptz default now(),
   seo_title text,
   seo_description text,
-  read_time_minutes integer
+  read_time_minutes integer,
+  featured boolean not null default false
 );
 
 create or replace function update_updated_at()
