@@ -224,19 +224,27 @@ Implemented from Stitch MCP screen "The Final Narrative Blog" in the "Scottsdale
 - Full Helmet meta tags per post (title, description, og:image, canonical)
 
 ### Blog Admin (/blog/admin)
-- Password: JaimeAdmin2024! (hardcoded at top of BlogAdmin.tsx — easy to change)
+- Login: username `jaime`, password `Test123` (constants `ADMIN_USERNAME` / `ADMIN_PASSWORD` at top of BlogAdmin.tsx)
+- StickyHeader is hidden on /blog/admin — admin renders its own full navy header via `AppShell` in App.tsx
 - Two views: LIST VIEW and EDITOR VIEW
 - Supabase CRUD operations with framer-motion toast notifications
 - Delete requires confirmation dialog (shadcn Dialog)
+- Cover photo: drag-and-drop upload to Supabase Storage (`blog-images` bucket) — required to publish, optional for drafts
+- Inline image upload: "+ Insert Image" button above markdown body inserts `![image](url)` at cursor
+- Auto read time (calculated from word count, locked when user manually edits)
+- SEO fields (title, description) with live Google SERP preview — collapsible section
 
 ## Supabase
 
 ### Environment Variables
-VITE_SUPABASE_URL= (get from supabase.com → project → Settings → API)
-VITE_SUPABASE_ANON_KEY= (same location)
+VITE_SUPABASE_URL= (Settings → General → Project URL in Supabase dashboard)
+VITE_SUPABASE_ANON_KEY= (Settings → API → Publishable key — the `sb_publishable_...` format works with supabase-js v2.103+)
+
+**Status: CONFIGURED** — both vars are set in .env.local and on Vercel.
 
 ### Posts Table
 Full SQL schema is in a comment block inside src/lib/supabase.ts.
+**Status: CREATED** — schema has been run in Supabase SQL Editor.
 
 Key fields: id, title, slug, excerpt, body, cover_image_url, category,
 tags (text array), published (boolean), published_at, seo_title,
@@ -246,14 +254,18 @@ RLS Policies:
 - Public can SELECT where published = true
 - Admin full access policy (frontend enforces password, not Supabase auth)
 
-## Environment Variables (.env.local)
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
-VITE_GOOGLE_PLACES_API_KEY=
-VITE_SHEET_BEST_URL=
+### Storage
+Bucket: `blog-images` (public) — **CREATED**
+Policies: public read, admin insert, admin delete — **APPLIED**
+Used for: cover photos and inline body images uploaded via blog admin
 
-All four are currently empty. Do not add placeholder text values —
-leave them empty so the null guards in the code work correctly.
+## Environment Variables (.env.local)
+VITE_SUPABASE_URL=✓ configured
+VITE_SUPABASE_ANON_KEY=✓ configured
+VITE_GOOGLE_PLACES_API_KEY= (still empty — home eval address autocomplete won't work)
+VITE_SHEET_BEST_URL= (still empty — restaurant guide form submission won't work)
+
+Leave empty vars blank — null guards in the code handle missing values gracefully.
 
 ## File Structure
 src/
@@ -281,7 +293,7 @@ src/
     constants.ts              ← Jaime's contact info and site constants (incl. JAIME.calendly)
     useWindowWidth.ts         ← Responsive hook, used in all sections
     utils.ts                  ← shadcn cn() utility
-  App.tsx                     ← BrowserRouter + HelmetProvider + Routes + GSAP setup + HomePage
+  App.tsx                     ← BrowserRouter + HelmetProvider + AppShell (hides StickyHeader on /blog/admin) + Routes + GSAP setup + HomePage
   main.tsx                    ← Entry point, ReactLenis root, ErrorBoundary
   index.css                   ← Design tokens, shadcn overrides, .prose-jaime, hero-video mobile zoom
   global.d.ts                 ← Window.Calendly + Window.google types
@@ -296,7 +308,7 @@ src/
 - Blog index, individual post, and admin pages — fully built
 - PostCard component (large/small/grid) matching "The Final Narrative Blog" Stitch design
 - All homepage sections built and styled
-- **Session 6 (current):**
+- **Session 6:**
   - Color scheme shifted: sand removed, white/navy alternating rhythm locked in
   - Hero video: `hero.mov` copied from Desktop to `/public/assets/videos/hero.mov`
   - Full mobile responsiveness: `useWindowWidth` hook, all sections responsive
@@ -308,15 +320,24 @@ src/
   - Blog (/blog): rebuilt from Stitch "The Final Narrative Blog" design
     - "The Narrative" masthead, asymmetric grid, secondary 3-col feed, newsletter
     - Uses main Footer component instead of custom blog footer strip
+- **Session 7 (current):**
+  - Vercel deployment live
+  - Supabase fully configured: posts table created, RLS policies applied
+  - Storage bucket `blog-images` created with public read + admin write policies
+  - Blog admin upgraded: username+password login (jaime/Test123)
+  - Cover photo: drag-and-drop upload to Supabase Storage (mandatory to publish)
+  - Inline image upload in markdown body editor (inserts at cursor)
+  - Auto read-time calculation (locks when manually edited)
+  - Route bug fixed: `/blog/admin` was matching `/blog/:slug` — reordered routes
+  - AppShell pattern: StickyHeader hidden on /blog/admin route
+  - VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY configured in .env.local and Vercel
 
 ### Needs Building (Priority Order)
-1. Vercel deployment
-2. Add VITE_GOOGLE_PLACES_API_KEY to .env.local
-3. Add VITE_SHEET_BEST_URL to .env.local
-4. Add VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY for blog
-5. Mobile responsiveness audit on blog + BlogPost pages
-6. Real headshot photo for About section (currently grey placeholder)
-7. Client to provide actual Calendly URL (currently using brogan-mcguire-creative/30min)
+1. Add VITE_GOOGLE_PLACES_API_KEY to .env.local + Vercel (home eval address autocomplete)
+2. Add VITE_SHEET_BEST_URL to .env.local + Vercel (restaurant guide form)
+3. Mobile responsiveness audit on blog + BlogPost pages
+4. Real headshot photo for About section (currently grey placeholder)
+5. Client to provide actual Calendly URL (currently using brogan-mcguire-creative/30min)
 
 ## Approved Design (Locked)
 
