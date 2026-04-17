@@ -115,6 +115,14 @@ export default function App() {
 function ScrollToTop() {
   const { pathname } = useLocation()
   const lenis = useLenis()
+
+  // Disable browser scroll restoration so it doesn't fight Lenis
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+  }, [])
+
   useEffect(() => {
     if (lenis) {
       lenis.scrollTo(0, { immediate: true })
@@ -122,6 +130,7 @@ function ScrollToTop() {
       window.scrollTo(0, 0)
     }
   }, [pathname, lenis])
+
   return null
 }
 
