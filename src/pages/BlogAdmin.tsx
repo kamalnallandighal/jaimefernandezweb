@@ -369,6 +369,7 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
   const removeTag = (tag: string) => setTags(tags.filter((t) => t !== tag))
 
   const handleCoverFile = async (file: File) => {
+    if (coverUploading) return
     if (!file.type.startsWith('image/')) {
       addToast('Please select an image file', false)
       return
