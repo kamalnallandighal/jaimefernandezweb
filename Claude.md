@@ -320,7 +320,7 @@ src/
   - Blog (/blog): rebuilt from Stitch "The Final Narrative Blog" design
     - "The Narrative" masthead, asymmetric grid, secondary 3-col feed, newsletter
     - Uses main Footer component instead of custom blog footer strip
-- **Session 7 (current):**
+- **Session 7:**
   - Vercel deployment live
   - Supabase fully configured: posts table created, RLS policies applied
   - Storage bucket `blog-images` created with public read + admin write policies
@@ -331,11 +331,19 @@ src/
   - Route bug fixed: `/blog/admin` was matching `/blog/:slug` — reordered routes
   - AppShell pattern: StickyHeader hidden on /blog/admin route
   - VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY configured in .env.local and Vercel
+- **Session 8 (current):**
+  - Vercel env var fix: `vite.config.ts` now uses `define` to explicitly map `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` from `process.env` — required because Vite's automatic `VITE_` prefix injection wasn't working on Vercel
+  - Blog redesign built and saved on `blog-redesign` branch (NOT yet merged to main):
+    - Blog index: featured post driven by `featured` flag on Post, responsive ALL view grid (55%/1fr → single col mobile), uniform 3-col grid on category filter, responsive padding throughout
+    - Admin editor: two-column desktop layout (body left, metadata right 380px sticky), 16:9 cover photo box, rounded tag pills, ★ featured toggle with automatic un-featuring of previous post, PostList collapses to cards on mobile
+    - Individual post: fluid header padding (`clamp`), related posts use `grid` (3:2) PostCard variant
+    - `Post` type updated: `featured: boolean` field added to `src/lib/supabase.ts`
+  - Blog redesign requires this SQL before merging: `ALTER TABLE posts ADD COLUMN featured boolean NOT NULL DEFAULT false;`
 
 ### Needs Building (Priority Order)
-1. Add VITE_GOOGLE_PLACES_API_KEY to .env.local + Vercel (home eval address autocomplete)
-2. Add VITE_SHEET_BEST_URL to .env.local + Vercel (restaurant guide form)
-3. Mobile responsiveness audit on blog + BlogPost pages
+1. Review + merge `blog-redesign` branch (run Supabase SQL first — see above)
+2. Add VITE_GOOGLE_PLACES_API_KEY to .env.local + Vercel (home eval address autocomplete)
+3. Add VITE_SHEET_BEST_URL to .env.local + Vercel (restaurant guide form)
 4. Real headshot photo for About section (currently grey placeholder)
 5. Client to provide actual Calendly URL (currently using brogan-mcguire-creative/30min)
 
