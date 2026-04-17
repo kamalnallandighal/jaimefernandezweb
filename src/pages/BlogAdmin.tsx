@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, type Post } from '@/lib/supabase'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { useWindowWidth } from '@/lib/useWindowWidth'
 
 const ADMIN_USERNAME = 'jaime'
 const ADMIN_PASSWORD = 'Test123'
@@ -180,6 +181,9 @@ interface PostListProps {
 }
 
 function PostList({ posts, loading, onEdit, onDelete }: PostListProps) {
+  const width = useWindowWidth()
+  const isMobile = width < 768
+
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto px-8 py-12 animate-pulse space-y-4">
@@ -199,6 +203,96 @@ function PostList({ posts, loading, onEdit, onDelete }: PostListProps) {
         >
           No posts yet. Click &quot;New Post&quot; to get started.
         </p>
+      </div>
+    )
+  }
+
+  if (isMobile) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        {posts.map((post) => (
+          <div
+            key={post.id}
+            style={{
+              backgroundColor: 'white',
+              borderBottom: '1px solid rgba(0,0,0,0.06)',
+              padding: '16px 0',
+            }}
+          >
+            <p
+              className="font-display mb-2"
+              style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontSize: '1rem',
+                color: '#002349',
+                lineHeight: 1.4,
+              }}
+            >
+              {post.title}
+            </p>
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
+              {post.category && (
+                <span
+                  className="font-body"
+                  style={{
+                    fontSize: '9px',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: '#999999',
+                  }}
+                >
+                  {post.category}
+                </span>
+              )}
+              {post.published ? (
+                <span
+                  className="font-body px-2 py-0.5"
+                  style={{
+                    fontSize: '9px',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    backgroundColor: '#f0fdf4',
+                    color: '#15803d',
+                  }}
+                >
+                  Published
+                </span>
+              ) : (
+                <span
+                  className="font-body px-2 py-0.5"
+                  style={{
+                    fontSize: '9px',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    backgroundColor: '#f3f4f6',
+                    color: '#6b7280',
+                  }}
+                >
+                  Draft
+                </span>
+              )}
+              <span className="font-body" style={{ fontSize: '0.75rem', color: '#999999' }}>
+                {post.published_at ? formatDate(post.published_at) : formatDate(post.created_at)}
+              </span>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => onEdit(post)}
+                className="font-body bg-transparent border-none cursor-pointer hover:underline"
+                style={{ fontSize: '0.75rem', color: '#C29B40' }}
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => onDelete(post)}
+                className="font-body bg-transparent border-none cursor-pointer hover:underline"
+                style={{ fontSize: '0.75rem', color: '#ef4444' }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     )
   }
@@ -314,6 +408,9 @@ interface PostEditorProps {
 }
 
 function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
+  const width = useWindowWidth()
+  const isDesktop = width >= 1024
+
   const isNew = !post
   const [title, setTitle] = useState(post?.title || '')
   const [slug, setSlug] = useState(post?.slug || '')
@@ -330,6 +427,7 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
   const [seoTitle, setSeoTitle] = useState(post?.seo_title || '')
   const [seoDesc, setSeoDesc] = useState(post?.seo_description || '')
   const [published, setPublished] = useState(post?.published || false)
+  const [featured, setFeatured] = useState(post?.featured || false)
   const [seoOpen, setSeoOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [coverUploading, setCoverUploading] = useState(false)
@@ -447,10 +545,30 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
       seo_title: seoTitle.trim() || null,
       seo_description: seoDesc.trim() || null,
       read_time_minutes: readTime || null,
+      featured,
     }
 
     try {
       if (!supabase) throw new Error('Supabase not configured')
+
+      // If featured, un-feature any other post that is currently featured
+      if (featured) {
+        const { data: existingFeatured } = await supabase
+          .from('posts')
+          .select('id')
+          .eq('featured', true)
+          .neq('id', post?.id ?? '')
+          .limit(1)
+
+        if (existingFeatured && existingFeatured.length > 0) {
+          await supabase
+            .from('posts')
+            .update({ featured: false })
+            .eq('id', existingFeatured[0].id)
+          addToast('Replaced previous featured post', true)
+        }
+      }
+
       if (isNew) {
         const { error } = await supabase.from('posts').insert([payload])
         if (error) throw error
@@ -470,166 +588,57 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
   const googlePreviewTitle = (seoTitle || title).slice(0, 60)
   const googlePreviewDesc = (seoDesc || excerpt).slice(0, 160)
 
-  return (
-    <div className="pb-24">
-      <div className="max-w-4xl mx-auto px-8 py-12">
+  // ── Right column content (metadata fields) ──────────────────────────────────
 
-        {/* Title */}
-        <div className="mb-8">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Post title..."
-            className="font-display w-full outline-none border-b pb-2 bg-transparent transition-colors"
-            style={{
-              fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontSize: '1.875rem',
-              color: '#002349',
-              borderColor: 'rgba(194,155,64,0.3)',
-            }}
-          />
-          <div className="mt-2 flex items-center gap-2">
-            <span className="font-body" style={{ fontSize: '0.75rem', color: '#999999' }}>
-              URL: /blog/
-            </span>
-            <input
-              type="text"
-              value={slug}
-              onChange={(e) => { setSlug(e.target.value); setSlugEdited(true) }}
-              className="font-body outline-none border-b bg-transparent flex-1"
-              style={{ fontSize: '0.75rem', color: '#999999', borderColor: 'rgba(0,0,0,0.1)' }}
-            />
-          </div>
-        </div>
+  const rightColumnContent = (
+    <>
+      {/* Cover Photo */}
+      <div className="mb-6">
+        <label
+          className="font-body block mb-2"
+          style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+        >
+          Cover Photo <span style={{ color: '#ef4444' }}>*</span>{' '}
+          <span style={{ color: '#cccccc', textTransform: 'none', letterSpacing: 0 }}>(required to publish)</span>
+        </label>
 
-        {/* Category */}
-        <div className="mb-8">
-          <label
-            className="font-body block mb-2"
-            style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
-          >
-            Category
-          </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="font-body w-full px-3 py-2.5 outline-none border bg-white cursor-pointer"
-            style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
-          >
-            <option value="">Select a category...</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </div>
+        {/* Hidden file input */}
+        <input
+          ref={coverFileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) handleCoverFile(file)
+            e.target.value = ''
+          }}
+        />
 
-        {/* Tags */}
-        <div className="mb-8">
-          <label
-            className="font-body block mb-2"
-            style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
-          >
-            Tags
-          </label>
-          <input
-            ref={tagInputRef}
-            type="text"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={handleTagKeyDown}
-            placeholder="Type a tag + Enter or comma to add"
-            className="font-body w-full px-3 py-2.5 outline-none border"
-            style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
-          />
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="font-body flex items-center gap-2 px-3 py-1"
-                  style={{
-                    backgroundColor: '#002349',
-                    color: 'white',
-                    fontSize: '10px',
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {tag}
-                  <button
-                    onClick={() => removeTag(tag)}
-                    className="bg-transparent border-none cursor-pointer text-white/60 hover:text-white"
-                    style={{ fontSize: '0.875rem', lineHeight: 1 }}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Excerpt */}
-        <div className="mb-8">
-          <label
-            className="font-body block mb-2"
-            style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
-          >
-            Excerpt <span style={{ color: '#cccccc' }}>(used for SEO meta description)</span>
-          </label>
-          <textarea
-            value={excerpt}
-            onChange={(e) => setExcerpt(e.target.value)}
-            rows={3}
-            className="font-body w-full px-3 py-2.5 outline-none border resize-none"
-            style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
-          />
-          <p
-            className="font-body mt-1 text-right"
-            style={{ fontSize: '0.75rem', color: excerpt.length > 160 ? '#ef4444' : '#999999' }}
-          >
-            {excerpt.length} / 160
-          </p>
-        </div>
-
-        {/* Cover Photo */}
-        <div className="mb-8">
-          <label
-            className="font-body block mb-2"
-            style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
-          >
-            Cover Photo <span style={{ color: '#ef4444' }}>*</span>{' '}
-            <span style={{ color: '#cccccc', textTransform: 'none', letterSpacing: 0 }}>(required to publish)</span>
-          </label>
-
-          {/* Hidden file input */}
-          <input
-            ref={coverFileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) handleCoverFile(file)
-              e.target.value = ''
-            }}
-          />
-
-          {/* Preview (shown after upload) */}
-          {coverUrl && !coverUploading && (
-            <div className="relative mb-3">
+        {/* 16:9 container */}
+        <div style={{ position: 'relative', aspectRatio: '16/9', width: '100%' }}>
+          {coverUrl && !coverUploading ? (
+            <>
               <img
                 src={coverUrl}
                 alt="Cover preview"
-                className="w-full object-cover"
-                style={{ maxHeight: '220px', display: 'block' }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
               />
               <button
                 onClick={() => { setCoverUrl(''); setShowCoverUrlInput(false) }}
-                className="absolute top-2 right-2 font-body flex items-center justify-center cursor-pointer"
+                className="font-body flex items-center justify-center cursor-pointer"
                 style={{
+                  position: 'absolute',
+                  top: '8px',
+                  right: '8px',
                   width: '28px',
                   height: '28px',
                   backgroundColor: 'rgba(0,0,0,0.6)',
@@ -637,23 +646,21 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
                   border: 'none',
                   fontSize: '1rem',
                   lineHeight: 1,
+                  zIndex: 1,
                 }}
                 title="Remove cover photo"
               >
                 ×
               </button>
-            </div>
-          )}
-
-          {/* Upload zone (shown when no cover) */}
-          {!coverUrl && (
+            </>
+          ) : (
             <div
               className="border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors"
               style={{
+                position: 'absolute',
+                inset: 0,
                 borderColor: coverUploading ? '#C29B40' : 'rgba(0,35,73,0.2)',
                 backgroundColor: coverUploading ? 'rgba(194,155,64,0.04)' : 'rgba(0,35,73,0.02)',
-                padding: '2.5rem 1rem',
-                minHeight: '140px',
               }}
               onClick={() => !coverUploading && coverFileRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
@@ -669,233 +676,521 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
                 </p>
               ) : (
                 <>
-                  <p className="font-body mb-2" style={{ fontSize: '0.875rem', color: '#002349' }}>
+                  <p className="font-body mb-1" style={{ fontSize: '0.8125rem', color: '#002349' }}>
                     Drag & drop or{' '}
                     <span style={{ color: '#C29B40', textDecoration: 'underline' }}>browse</span>
                   </p>
-                  <p className="font-body" style={{ fontSize: '0.75rem', color: '#999999' }}>
-                    JPG, PNG, WebP recommended
+                  <p className="font-body" style={{ fontSize: '0.6875rem', color: '#999999' }}>
+                    JPG, PNG, WebP — 16:9
                   </p>
                 </>
               )}
             </div>
           )}
-
-          {/* URL toggle */}
-          <button
-            onClick={() => setShowCoverUrlInput(!showCoverUrlInput)}
-            className="font-body bg-transparent border-none cursor-pointer mt-2"
-            style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999999' }}
-          >
-            {showCoverUrlInput ? '− Hide URL input' : '+ Paste URL instead'}
-          </button>
-
-          {showCoverUrlInput && (
-            <div className="mt-2">
-              <input
-                type="text"
-                value={coverUrl}
-                onChange={(e) => setCoverUrl(e.target.value)}
-                placeholder="https://..."
-                className="font-body w-full px-3 py-2.5 outline-none border"
-                style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
-              />
-            </div>
-          )}
         </div>
 
-        {/* Body */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-1">
-            <label
-              className="font-body"
-              style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
-            >
-              Content <span style={{ color: '#cccccc' }}>(Markdown supported)</span>
-            </label>
-            <>
-              <input
-                ref={bodyImageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) handleBodyImageInsert(file)
-                  e.target.value = ''
-                }}
-              />
-              <button
-                onClick={() => bodyImageInputRef.current?.click()}
-                disabled={bodyUploading}
-                className="font-body border-none cursor-pointer disabled:opacity-50 transition-opacity"
-                style={{
-                  fontSize: '10px',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: '#C29B40',
-                  backgroundColor: 'transparent',
-                  padding: '2px 0',
-                }}
-              >
-                {bodyUploading ? 'Uploading...' : '+ Insert Image'}
-              </button>
-            </>
+        {/* URL toggle */}
+        <button
+          onClick={() => setShowCoverUrlInput(!showCoverUrlInput)}
+          className="font-body bg-transparent border-none cursor-pointer mt-2"
+          style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999999' }}
+        >
+          {showCoverUrlInput ? '− Hide URL input' : '+ Paste URL instead'}
+        </button>
+
+        {showCoverUrlInput && (
+          <div className="mt-2">
+            <input
+              type="text"
+              value={coverUrl}
+              onChange={(e) => setCoverUrl(e.target.value)}
+              placeholder="https://..."
+              className="font-body w-full px-3 py-2.5 outline-none border"
+              style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
+            />
           </div>
-          <p
-            className="font-body mb-2"
-            style={{ fontSize: '10px', color: '#999999' }}
-          >
-            **bold** | *italic* | # Heading | [link](url) | ![image](url)
-          </p>
-          <textarea
-            ref={bodyRef}
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={20}
-            className="font-mono w-full px-3 py-3 outline-none border resize-y"
-            style={{ fontSize: '0.8125rem', color: '#333', borderColor: 'rgba(0,0,0,0.12)', lineHeight: 1.6 }}
-          />
-        </div>
+        )}
+      </div>
 
-        {/* Read Time */}
-        <div className="mb-8">
-          <label
-            className="font-body block mb-2"
-            style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
-          >
-            Read Time (minutes)
-          </label>
-          <input
-            type="number"
-            value={readTime}
-            onChange={(e) => { setReadTime(parseInt(e.target.value) || 0); setReadTimeEdited(true) }}
-            className="font-body px-3 py-2.5 outline-none border w-24"
-            style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
-          />
-          <p className="font-body mt-1" style={{ fontSize: '0.75rem', color: '#999999' }}>
-            Auto-calculated: {autoReadTime} min
-          </p>
-        </div>
+      {/* Category */}
+      <div className="mb-6">
+        <label
+          className="font-body block mb-2"
+          style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+        >
+          Category
+        </label>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="font-body w-full px-3 py-2.5 outline-none border bg-white cursor-pointer"
+          style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
+        >
+          <option value="">Select a category...</option>
+          {CATEGORIES.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+      </div>
 
-        {/* SEO Section (collapsible) */}
-        <div className="mb-8 border-t pt-6" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
-          <button
-            onClick={() => setSeoOpen(!seoOpen)}
-            className="font-body bg-transparent border-none cursor-pointer"
-            style={{
-              fontSize: '11px',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
-              color: '#C29B40',
-            }}
-          >
-            SEO Settings {seoOpen ? '−' : '+'}
-          </button>
-
-          <AnimatePresence>
-            {seoOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                style={{ overflow: 'hidden' }}
+      {/* Tags */}
+      <div className="mb-6">
+        <label
+          className="font-body block mb-2"
+          style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+        >
+          Tags
+        </label>
+        <input
+          ref={tagInputRef}
+          type="text"
+          value={tagInput}
+          onChange={(e) => setTagInput(e.target.value)}
+          onKeyDown={handleTagKeyDown}
+          placeholder="Type a tag + Enter or comma"
+          className="font-body w-full px-3 py-2.5 outline-none border"
+          style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
+        />
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="font-body flex items-center gap-1.5 px-3 py-1"
+                style={{
+                  backgroundColor: 'rgba(0,35,73,0.07)',
+                  color: '#002349',
+                  borderRadius: '9999px',
+                  border: '1px solid rgba(0,35,73,0.15)',
+                  fontSize: '10px',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}
               >
-                <div className="mt-6 space-y-6">
-                  {/* SEO Title */}
-                  <div>
-                    <label
-                      className="font-body block mb-2"
-                      style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
-                    >
-                      SEO Title
-                    </label>
-                    <input
-                      type="text"
-                      value={seoTitle}
-                      onChange={(e) => setSeoTitle(e.target.value)}
-                      className="font-body w-full px-3 py-2.5 outline-none border"
-                      style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
-                    />
-                    <p
-                      className="font-body mt-1 text-right"
-                      style={{ fontSize: '0.75rem', color: seoTitle.length > 60 ? '#ef4444' : '#999999' }}
-                    >
-                      {seoTitle.length} / 60
-                    </p>
-                  </div>
+                {tag}
+                <button
+                  onClick={() => removeTag(tag)}
+                  className="bg-transparent border-none cursor-pointer transition-colors"
+                  style={{ fontSize: '0.875rem', lineHeight: 1, color: '#999999' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#002349')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#999999')}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
 
-                  {/* SEO Description */}
-                  <div>
-                    <label
-                      className="font-body block mb-2"
-                      style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
-                    >
-                      SEO Description
-                    </label>
-                    <textarea
-                      value={seoDesc}
-                      onChange={(e) => setSeoDesc(e.target.value)}
-                      rows={3}
-                      className="font-body w-full px-3 py-2.5 outline-none border resize-none"
-                      style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
-                    />
-                    <p
-                      className="font-body mt-1 text-right"
-                      style={{ fontSize: '0.75rem', color: seoDesc.length > 160 ? '#ef4444' : '#999999' }}
-                    >
-                      {seoDesc.length} / 160
-                    </p>
-                  </div>
+      {/* Excerpt */}
+      <div className="mb-6">
+        <label
+          className="font-body block mb-2"
+          style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+        >
+          Excerpt <span style={{ color: '#cccccc' }}>(used for SEO meta description)</span>
+        </label>
+        <textarea
+          value={excerpt}
+          onChange={(e) => setExcerpt(e.target.value)}
+          rows={3}
+          className="font-body w-full px-3 py-2.5 outline-none border resize-none"
+          style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
+        />
+        <p
+          className="font-body mt-1 text-right"
+          style={{ fontSize: '0.75rem', color: excerpt.length > 160 ? '#ef4444' : '#999999' }}
+        >
+          {excerpt.length} / 160
+        </p>
+      </div>
 
-                  {/* Google Preview */}
-                  <div>
-                    <p
-                      className="font-body mb-2"
-                      style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
-                    >
-                      Google Preview
+      {/* Read Time */}
+      <div className="mb-6">
+        <label
+          className="font-body block mb-2"
+          style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+        >
+          Read Time (minutes)
+        </label>
+        <input
+          type="number"
+          value={readTime}
+          onChange={(e) => { setReadTime(parseInt(e.target.value) || 0); setReadTimeEdited(true) }}
+          className="font-body px-3 py-2.5 outline-none border w-24"
+          style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
+        />
+        <p className="font-body mt-1" style={{ fontSize: '0.75rem', color: '#999999' }}>
+          Auto-calculated: {autoReadTime} min
+        </p>
+      </div>
+
+      {/* Featured Toggle */}
+      <div className="mb-6 pt-4 border-t" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={featured}
+            onChange={(e) => setFeatured(e.target.checked)}
+            className="w-4 h-4 cursor-pointer mt-0.5 flex-shrink-0"
+            style={{ accentColor: '#C29B40' }}
+          />
+          <div>
+            <span className="font-body font-semibold" style={{ fontSize: '0.875rem', color: '#002349' }}>
+              <span style={{ color: '#C29B40', marginRight: '4px' }}>★</span>
+              Feature this post
+            </span>
+            <p className="font-body" style={{ fontSize: '0.75rem', color: '#999999' }}>
+              Mark as the hero story on the blog homepage
+            </p>
+          </div>
+        </label>
+      </div>
+
+      {/* SEO Section (collapsible) */}
+      <div className="mb-6 border-t pt-4" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
+        <button
+          onClick={() => setSeoOpen(!seoOpen)}
+          className="font-body bg-transparent border-none cursor-pointer"
+          style={{
+            fontSize: '11px',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color: '#C29B40',
+          }}
+        >
+          SEO Settings {seoOpen ? '−' : '+'}
+        </button>
+
+        <AnimatePresence>
+          {seoOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              style={{ overflow: 'hidden' }}
+            >
+              <div className="mt-4 space-y-4">
+                {/* SEO Title */}
+                <div>
+                  <label
+                    className="font-body block mb-2"
+                    style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+                  >
+                    SEO Title
+                  </label>
+                  <input
+                    type="text"
+                    value={seoTitle}
+                    onChange={(e) => setSeoTitle(e.target.value)}
+                    className="font-body w-full px-3 py-2.5 outline-none border"
+                    style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
+                  />
+                  <p
+                    className="font-body mt-1 text-right"
+                    style={{ fontSize: '0.75rem', color: seoTitle.length > 60 ? '#ef4444' : '#999999' }}
+                  >
+                    {seoTitle.length} / 60
+                  </p>
+                </div>
+
+                {/* SEO Description */}
+                <div>
+                  <label
+                    className="font-body block mb-2"
+                    style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+                  >
+                    SEO Description
+                  </label>
+                  <textarea
+                    value={seoDesc}
+                    onChange={(e) => setSeoDesc(e.target.value)}
+                    rows={3}
+                    className="font-body w-full px-3 py-2.5 outline-none border resize-none"
+                    style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
+                  />
+                  <p
+                    className="font-body mt-1 text-right"
+                    style={{ fontSize: '0.75rem', color: seoDesc.length > 160 ? '#ef4444' : '#999999' }}
+                  >
+                    {seoDesc.length} / 160
+                  </p>
+                </div>
+
+                {/* Google Preview */}
+                <div>
+                  <p
+                    className="font-body mb-2"
+                    style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+                  >
+                    Google Preview
+                  </p>
+                  <div className="border p-4" style={{ borderColor: 'rgba(0,0,0,0.12)' }}>
+                    <p style={{ fontSize: '1rem', color: '#1a0dab', cursor: 'pointer' }} className="font-body">
+                      {googlePreviewTitle || 'Post title will appear here'}
                     </p>
-                    <div className="border p-4" style={{ borderColor: 'rgba(0,0,0,0.12)', maxWidth: '540px' }}>
-                      <p style={{ fontSize: '1.125rem', color: '#1a0dab', cursor: 'pointer' }} className="font-body">
-                        {googlePreviewTitle || 'Post title will appear here'}
-                      </p>
-                      <p style={{ fontSize: '0.8125rem', color: '#006621' }} className="font-body">
-                        yoursite.com/blog/{slug || 'post-slug'}
-                      </p>
-                      <p style={{ fontSize: '0.8125rem', color: '#545454', marginTop: '2px' }} className="font-body">
-                        {googlePreviewDesc || 'Excerpt or SEO description will appear here...'}
-                      </p>
-                    </div>
+                    <p style={{ fontSize: '0.75rem', color: '#006621' }} className="font-body">
+                      yoursite.com/blog/{slug || 'post-slug'}
+                    </p>
+                    <p style={{ fontSize: '0.75rem', color: '#545454', marginTop: '2px' }} className="font-body">
+                      {googlePreviewDesc || 'Excerpt or SEO description will appear here...'}
+                    </p>
                   </div>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-        {/* Published Toggle */}
-        <div className="mb-8">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={published}
-              onChange={(e) => setPublished(e.target.checked)}
-              className="w-4 h-4 cursor-pointer"
-              style={{ accentColor: '#C29B40' }}
-            />
-            <div>
-              <span className="font-body font-semibold" style={{ fontSize: '0.875rem', color: '#002349' }}>
-                Published
-              </span>
-              <p className="font-body" style={{ fontSize: '0.75rem', color: '#999999' }}>
-                Unpublished posts are only visible to admins
-              </p>
-            </div>
-          </label>
+      {/* Published Toggle */}
+      <div className="mb-6">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={published}
+            onChange={(e) => setPublished(e.target.checked)}
+            className="w-4 h-4 cursor-pointer"
+            style={{ accentColor: '#C29B40' }}
+          />
+          <div>
+            <span className="font-body font-semibold" style={{ fontSize: '0.875rem', color: '#002349' }}>
+              Published
+            </span>
+            <p className="font-body" style={{ fontSize: '0.75rem', color: '#999999' }}>
+              Unpublished posts are only visible to admins
+            </p>
+          </div>
+        </label>
+      </div>
+    </>
+  )
+
+  // ── Left column content (title + slug + body) ────────────────────────────────
+
+  const leftColumnContent = (
+    <>
+      {/* Title */}
+      <div className="mb-4">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Post title..."
+          className="font-display w-full outline-none border-b pb-2 bg-transparent transition-colors"
+          style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: '2rem',
+            color: '#002349',
+            borderColor: 'rgba(194,155,64,0.3)',
+          }}
+        />
+        <div className="mt-2 flex items-center gap-2">
+          <span className="font-body" style={{ fontSize: '0.75rem', color: '#999999' }}>
+            URL: /blog/
+          </span>
+          <input
+            type="text"
+            value={slug}
+            onChange={(e) => { setSlug(e.target.value); setSlugEdited(true) }}
+            className="font-body outline-none border-b bg-transparent flex-1"
+            style={{ fontSize: '0.75rem', color: '#999999', borderColor: 'rgba(0,0,0,0.1)' }}
+          />
         </div>
       </div>
+
+      {/* Body */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label
+            className="font-body"
+            style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+          >
+            Content <span style={{ color: '#cccccc' }}>(Markdown supported)</span>
+          </label>
+          <>
+            <input
+              ref={bodyImageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleBodyImageInsert(file)
+                e.target.value = ''
+              }}
+            />
+            <button
+              onClick={() => bodyImageInputRef.current?.click()}
+              disabled={bodyUploading}
+              className="font-body border-none cursor-pointer disabled:opacity-50 transition-opacity"
+              style={{
+                fontSize: '10px',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: '#C29B40',
+                backgroundColor: 'transparent',
+                padding: '2px 0',
+              }}
+            >
+              {bodyUploading ? 'Uploading...' : '+ Insert Image'}
+            </button>
+          </>
+        </div>
+        <p
+          className="font-body mb-2"
+          style={{ fontSize: '10px', color: '#999999' }}
+        >
+          **bold** | *italic* | # Heading | [link](url) | ![image](url)
+        </p>
+        <textarea
+          ref={bodyRef}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          className="font-mono w-full px-3 py-3 outline-none border resize-y"
+          style={{
+            fontSize: '0.8125rem',
+            color: '#333',
+            borderColor: 'rgba(0,0,0,0.12)',
+            lineHeight: 1.6,
+            minHeight: 'calc(100vh - 220px)',
+          }}
+        />
+      </div>
+    </>
+  )
+
+  return (
+    <div className="pb-24">
+      {isDesktop ? (
+        // ── Desktop: two-column grid ──────────────────────────────────────────
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 380px',
+            gap: '48px',
+            alignItems: 'start',
+            maxWidth: '1280px',
+            margin: '0 auto',
+            padding: '48px 48px 0',
+          }}
+        >
+          {/* Left column */}
+          <div>
+            {leftColumnContent}
+          </div>
+
+          {/* Right column — scrollable */}
+          <div
+            style={{
+              position: 'sticky',
+              top: '80px',
+              maxHeight: 'calc(100vh - 100px)',
+              overflowY: 'auto',
+              paddingRight: '4px',
+            }}
+          >
+            {rightColumnContent}
+          </div>
+        </div>
+      ) : (
+        // ── Mobile/Tablet: single column — metadata above body ────────────────
+        <div
+          style={{
+            maxWidth: '680px',
+            margin: '0 auto',
+            padding: '32px 24px 0',
+          }}
+        >
+          {/* Title + slug */}
+          <div className="mb-6">
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Post title..."
+              className="font-display w-full outline-none border-b pb-2 bg-transparent transition-colors"
+              style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontSize: '1.75rem',
+                color: '#002349',
+                borderColor: 'rgba(194,155,64,0.3)',
+              }}
+            />
+            <div className="mt-2 flex items-center gap-2">
+              <span className="font-body" style={{ fontSize: '0.75rem', color: '#999999' }}>
+                URL: /blog/
+              </span>
+              <input
+                type="text"
+                value={slug}
+                onChange={(e) => { setSlug(e.target.value); setSlugEdited(true) }}
+                className="font-body outline-none border-b bg-transparent flex-1"
+                style={{ fontSize: '0.75rem', color: '#999999', borderColor: 'rgba(0,0,0,0.1)' }}
+              />
+            </div>
+          </div>
+
+          {/* Metadata fields */}
+          {rightColumnContent}
+
+          {/* Body */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-1">
+              <label
+                className="font-body"
+                style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+              >
+                Content <span style={{ color: '#cccccc' }}>(Markdown supported)</span>
+              </label>
+              <>
+                <input
+                  ref={bodyImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleBodyImageInsert(file)
+                    e.target.value = ''
+                  }}
+                />
+                <button
+                  onClick={() => bodyImageInputRef.current?.click()}
+                  disabled={bodyUploading}
+                  className="font-body border-none cursor-pointer disabled:opacity-50 transition-opacity"
+                  style={{
+                    fontSize: '10px',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: '#C29B40',
+                    backgroundColor: 'transparent',
+                    padding: '2px 0',
+                  }}
+                >
+                  {bodyUploading ? 'Uploading...' : '+ Insert Image'}
+                </button>
+              </>
+            </div>
+            <p
+              className="font-body mb-2"
+              style={{ fontSize: '10px', color: '#999999' }}
+            >
+              **bold** | *italic* | # Heading | [link](url) | ![image](url)
+            </p>
+            <textarea
+              ref={bodyRef}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={20}
+              className="font-mono w-full px-3 py-3 outline-none border resize-y"
+              style={{ fontSize: '0.8125rem', color: '#333', borderColor: 'rgba(0,0,0,0.12)', lineHeight: 1.6 }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Sticky Bottom Action Bar */}
       <div

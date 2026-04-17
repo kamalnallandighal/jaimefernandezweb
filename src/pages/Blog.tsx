@@ -3,15 +3,19 @@ import { Helmet } from 'react-helmet-async'
 import { supabase, type Post } from '@/lib/supabase'
 import PostCard from '@/components/PostCard'
 import Footer from '@/components/Footer'
+import { useWindowWidth } from '@/lib/useWindowWidth'
 
 const CATEGORIES = ['ALL', 'Market Insights', 'Neighborhoods', 'Buyer Guides', 'Seller Guides', '85254']
 
 // ─── Loading skeleton ────────────────────────────────────────────────────────
 
 function ShimmerGrid() {
+  const width = useWindowWidth()
+  const hPad = width < 768 ? '24px' : '48px'
+
   return (
-    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 48px 96px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '55% 1fr', gap: '48px', marginBottom: '96px' }}>
+    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: `0 ${hPad} 96px` }}>
+      <div style={{ display: 'grid', gridTemplateColumns: width >= 1024 ? '55% 1fr' : '1fr', gap: '48px', marginBottom: '96px' }}>
         <div style={{ animation: 'pulse 1.5s infinite' }}>
           <div style={{ backgroundColor: '#eceae5', aspectRatio: '4/5', width: '100%', marginBottom: '32px' }} />
           <div style={{ backgroundColor: '#eceae5', height: '12px', width: '80px', marginBottom: '16px' }} />
@@ -60,9 +64,11 @@ function ErrorState() {
 function Newsletter() {
   const [email, setEmail] = useState('')
   const [done, setDone] = useState(false)
+  const width = useWindowWidth()
+  const hPad = width < 768 ? '24px' : '48px'
 
   return (
-    <section style={{ backgroundColor: '#f5f3ef', padding: '96px 48px', textAlign: 'center', marginTop: '96px' }}>
+    <section style={{ backgroundColor: '#f5f3ef', padding: `96px ${hPad}`, textAlign: 'center', marginTop: '96px' }}>
       <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 300, color: '#002349', margin: 0, marginBottom: '20px' }}>
         Stay Informed
       </h2>
@@ -140,6 +146,12 @@ export default function Blog() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [activeCategory, setActiveCategory] = useState('ALL')
+  const width = useWindowWidth()
+
+  const hPad = width < 768 ? '24px' : '48px'
+  const isDesktop = width >= 1024
+  const isTablet = width >= 768 && width < 1024
+  const isMobile = width < 768
 
   useEffect(() => {
     async function fetchPosts() {
@@ -165,9 +177,23 @@ export default function Blog() {
     ? posts
     : posts.filter(p => p.category === activeCategory)
 
-  const [featuredLarge, ...rest] = filtered
+  // Find featured post: first post with featured === true, fallback to filtered[0]
+  const featuredIndex = filtered.findIndex(p => p.featured === true)
+  const featuredLarge: Post | undefined = featuredIndex !== -1 ? filtered[featuredIndex] : filtered[0]
+  const rest: Post[] = featuredLarge
+    ? filtered.filter((_, i) => i !== (featuredIndex !== -1 ? featuredIndex : 0))
+    : []
+
   const featuredSmall = rest.slice(0, 4)
   const secondaryFeed = rest.slice(4, 7)
+
+  // Category filter grid columns
+  let categoryGridCols = 'repeat(3, 1fr)'
+  if (isTablet) categoryGridCols = 'repeat(2, 1fr)'
+  if (isMobile) categoryGridCols = '1fr'
+
+  // Category nav gap
+  const navGap = isMobile ? '0 16px' : '0 40px'
 
   return (
     <>
@@ -208,7 +234,7 @@ export default function Blog() {
             borderBottom: '1px solid rgba(0,0,0,0.06)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0 40px', padding: '20px 24px', overflowX: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: navGap, padding: '20px 24px', overflowX: 'auto' }}>
             {CATEGORIES.map(cat => (
               <button
                 key={cat}
@@ -243,36 +269,49 @@ export default function Blog() {
         {!loading && !error && filtered.length === 0 && <EmptyState />}
 
         {!loading && !error && filtered.length > 0 && (
-          <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '80px 48px 0' }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', padding: `80px ${hPad} 0` }}>
 
-            {/* Asymmetric Featured Grid */}
-            <section style={{
-              display: 'grid',
-              gridTemplateColumns: featuredSmall.length > 0 ? '55% 1fr' : '1fr',
-              gap: '64px',
-              marginBottom: '96px',
-              alignItems: 'start',
-            }}>
-              {featuredLarge && <PostCard post={featuredLarge} size="large" />}
+            {activeCategory === 'ALL' ? (
+              <>
+                {/* Asymmetric Featured Grid — ALL view */}
+                <section style={{
+                  display: 'grid',
+                  gridTemplateColumns: isDesktop && featuredSmall.length > 0 ? '55% 1fr' : '1fr',
+                  gap: isDesktop ? '64px' : '40px',
+                  marginBottom: '96px',
+                  alignItems: 'start',
+                }}>
+                  {featuredLarge && <PostCard post={featuredLarge} size="large" />}
 
-              {featuredSmall.length > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 24px' }}>
-                  {featuredSmall.map(post => (
-                    <PostCard key={post.id} post={post} size="small" />
-                  ))}
-                </div>
-              )}
-            </section>
+                  {featuredSmall.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 24px' }}>
+                      {featuredSmall.map(post => (
+                        <PostCard key={post.id} post={post} size="small" />
+                      ))}
+                    </div>
+                  )}
+                </section>
 
-            {/* Secondary 3-column feed */}
-            {secondaryFeed.length > 0 && (
-              <section style={{
-                borderTop: '1px solid rgba(0,0,0,0.06)',
-                paddingTop: '80px',
-                marginBottom: '96px',
-              }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '48px' }}>
-                  {secondaryFeed.map(post => (
+                {/* Secondary 3-column feed */}
+                {secondaryFeed.length > 0 && (
+                  <section style={{
+                    borderTop: '1px solid rgba(0,0,0,0.06)',
+                    paddingTop: '80px',
+                    marginBottom: '96px',
+                  }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? 'repeat(3, 1fr)' : isTablet ? 'repeat(2, 1fr)' : '1fr', gap: '48px' }}>
+                      {secondaryFeed.map(post => (
+                        <PostCard key={post.id} post={post} size="grid" />
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </>
+            ) : (
+              /* Category-filtered uniform grid */
+              <section style={{ marginBottom: '96px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: categoryGridCols, gap: '40px' }}>
+                  {filtered.map(post => (
                     <PostCard key={post.id} post={post} size="grid" />
                   ))}
                 </div>

@@ -177,7 +177,7 @@ export default function BlogPost() {
         )}
 
         {/* Post Header */}
-        <div className="max-w-3xl mx-auto px-6 pt-14 pb-8">
+        <div className="max-w-3xl mx-auto px-6 pb-8" style={{ paddingTop: 'clamp(32px, 5vw, 56px)' }}>
           {post.category && (
             <span
               className="font-body block mb-4"
@@ -286,7 +286,7 @@ export default function BlogPost() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {relatedPosts.map((p) => (
-                <PostCard key={p.id} post={p} size="small" />
+                <PostCard key={p.id} post={p} size="grid" />
               ))}
             </div>
           </section>
