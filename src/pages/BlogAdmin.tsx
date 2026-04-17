@@ -425,8 +425,12 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
       addToast('Title and body are required', false)
       return
     }
-    setSaving(true)
     const shouldPublish = publishOverride !== undefined ? publishOverride : published
+    if (shouldPublish && !coverUrl.trim()) {
+      addToast('Cover photo is required to publish', false)
+      return
+    }
+    setSaving(true)
     const publishedAt = shouldPublish && !post?.published_at ? new Date().toISOString() : post?.published_at || null
 
     const payload = {
