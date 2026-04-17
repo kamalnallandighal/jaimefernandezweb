@@ -3,9 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-console.log('[supabase] URL:', supabaseUrl ? supabaseUrl.slice(0, 30) + '...' : 'MISSING')
-console.log('[supabase] KEY:', supabaseAnonKey ? supabaseAnonKey.slice(0, 10) + '...' : 'MISSING')
-
 // supabase will be null when env vars aren't configured yet.
 // Blog pages handle this gracefully with their error/empty states.
 export const supabase = supabaseUrl && supabaseAnonKey
