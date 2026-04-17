@@ -335,6 +335,9 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
   const [showCoverUrlInput, setShowCoverUrlInput] = useState(!!post?.cover_image_url && !post.cover_image_url.includes('supabase'))
   const coverFileRef = useRef<HTMLInputElement>(null)
   const tagInputRef = useRef<HTMLInputElement>(null)
+  const [bodyUploading, setBodyUploading] = useState(false)
+  const bodyRef = useRef<HTMLTextAreaElement>(null)
+  const bodyImageInputRef = useRef<HTMLInputElement>(null)
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -383,6 +386,37 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
       addToast('Failed to upload image', false)
     } finally {
       setCoverUploading(false)
+    }
+  }
+
+  const handleBodyImageInsert = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      addToast('Please select an image file', false)
+      return
+    }
+    setBodyUploading(true)
+    try {
+      const url = await uploadImage(file)
+      const textarea = bodyRef.current
+      if (textarea) {
+        const start = textarea.selectionStart ?? body.length
+        const end = textarea.selectionEnd ?? body.length
+        const insertion = `![image](${url})`
+        const newBody = body.slice(0, start) + insertion + body.slice(end)
+        setBody(newBody)
+        setTimeout(() => {
+          textarea.selectionStart = start + insertion.length
+          textarea.selectionEnd = start + insertion.length
+          textarea.focus()
+        }, 0)
+      } else {
+        setBody((prev) => prev + `\n![image](${url})`)
+      }
+      addToast('Image inserted ✓', true)
+    } catch {
+      addToast('Failed to upload image', false)
+    } finally {
+      setBodyUploading(false)
     }
   }
 
@@ -667,12 +701,42 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
 
         {/* Body */}
         <div className="mb-8">
-          <label
-            className="font-body block mb-1"
-            style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
-          >
-            Content <span style={{ color: '#cccccc' }}>(Markdown supported)</span>
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label
+              className="font-body"
+              style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
+            >
+              Content <span style={{ color: '#cccccc' }}>(Markdown supported)</span>
+            </label>
+            <>
+              <input
+                ref={bodyImageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleBodyImageInsert(file)
+                  e.target.value = ''
+                }}
+              />
+              <button
+                onClick={() => bodyImageInputRef.current?.click()}
+                disabled={bodyUploading}
+                className="font-body border-none cursor-pointer disabled:opacity-50 transition-opacity"
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: '#C29B40',
+                  backgroundColor: 'transparent',
+                  padding: '2px 0',
+                }}
+              >
+                {bodyUploading ? 'Uploading...' : '+ Insert Image'}
+              </button>
+            </>
+          </div>
           <p
             className="font-body mb-2"
             style={{ fontSize: '10px', color: '#999999' }}
@@ -680,6 +744,7 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
             **bold** | *italic* | # Heading | [link](url) | ![image](url)
           </p>
           <textarea
+            ref={bodyRef}
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={20}
