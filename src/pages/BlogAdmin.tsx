@@ -325,6 +325,7 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
   const [coverUrl, setCoverUrl] = useState(post?.cover_image_url || '')
   const [body, setBody] = useState(post?.body || '')
   const [readTime, setReadTime] = useState(post?.read_time_minutes || 0)
+  const [readTimeEdited, setReadTimeEdited] = useState(!!post?.read_time_minutes)
   const [autoReadTime, setAutoReadTime] = useState(0)
   const [seoTitle, setSeoTitle] = useState(post?.seo_title || '')
   const [seoDesc, setSeoDesc] = useState(post?.seo_description || '')
@@ -332,7 +333,7 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
   const [seoOpen, setSeoOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [coverUploading, setCoverUploading] = useState(false)
-  const [showCoverUrlInput, setShowCoverUrlInput] = useState(!!post?.cover_image_url && !post.cover_image_url.includes('supabase'))
+  const [showCoverUrlInput, setShowCoverUrlInput] = useState(false)
   const coverFileRef = useRef<HTMLInputElement>(null)
   const tagInputRef = useRef<HTMLInputElement>(null)
   const [bodyUploading, setBodyUploading] = useState(false)
@@ -351,8 +352,8 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
     const words = countWords(body)
     const auto = Math.ceil(words / 200) || 1
     setAutoReadTime(auto)
-    setReadTime(auto)
-  }, [body])
+    if (!readTimeEdited) setReadTime(auto)
+  }, [body, readTimeEdited])
 
   const addTag = (raw: string) => {
     const tag = raw.trim().replace(/,/g, '')
@@ -768,7 +769,7 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
           <input
             type="number"
             value={readTime}
-            onChange={(e) => setReadTime(parseInt(e.target.value) || 0)}
+            onChange={(e) => { setReadTime(parseInt(e.target.value) || 0); setReadTimeEdited(true) }}
             className="font-body px-3 py-2.5 outline-none border w-24"
             style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
           />
