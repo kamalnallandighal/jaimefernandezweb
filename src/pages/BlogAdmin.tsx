@@ -331,6 +331,9 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
   const [published, setPublished] = useState(post?.published || false)
   const [seoOpen, setSeoOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [coverUploading, setCoverUploading] = useState(false)
+  const [showCoverUrlInput, setShowCoverUrlInput] = useState(!!post?.cover_image_url && !post.cover_image_url.includes('supabase'))
+  const coverFileRef = useRef<HTMLInputElement>(null)
   const tagInputRef = useRef<HTMLInputElement>(null)
 
   // Auto-generate slug from title
@@ -364,6 +367,23 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
   }
 
   const removeTag = (tag: string) => setTags(tags.filter((t) => t !== tag))
+
+  const handleCoverFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      addToast('Please select an image file', false)
+      return
+    }
+    setCoverUploading(true)
+    try {
+      const url = await uploadImage(file)
+      setCoverUrl(url)
+      setShowCoverUrlInput(false)
+    } catch {
+      addToast('Failed to upload image', false)
+    } finally {
+      setCoverUploading(false)
+    }
+  }
 
   const save = async (publishOverride?: boolean) => {
     if (!title.trim() || !body.trim()) {
@@ -533,30 +553,114 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
           </p>
         </div>
 
-        {/* Cover Image URL */}
+        {/* Cover Photo */}
         <div className="mb-8">
           <label
             className="font-body block mb-2"
             style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999999' }}
           >
-            Cover Image URL
+            Cover Photo <span style={{ color: '#ef4444' }}>*</span>{' '}
+            <span style={{ color: '#cccccc', textTransform: 'none', letterSpacing: 0 }}>(required to publish)</span>
           </label>
+
+          {/* Hidden file input */}
           <input
-            type="text"
-            value={coverUrl}
-            onChange={(e) => setCoverUrl(e.target.value)}
-            placeholder="https://..."
-            className="font-body w-full px-3 py-2.5 outline-none border"
-            style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
+            ref={coverFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handleCoverFile(file)
+              e.target.value = ''
+            }}
           />
-          {coverUrl && (
-            <img
-              src={coverUrl}
-              alt="Cover preview"
-              className="mt-2 object-cover"
-              style={{ maxHeight: '8rem', width: 'auto' }}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            />
+
+          {/* Preview (shown after upload) */}
+          {coverUrl && !coverUploading && (
+            <div className="relative mb-3">
+              <img
+                src={coverUrl}
+                alt="Cover preview"
+                className="w-full object-cover"
+                style={{ maxHeight: '220px', display: 'block' }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+              />
+              <button
+                onClick={() => { setCoverUrl(''); setShowCoverUrlInput(false) }}
+                className="absolute top-2 right-2 font-body flex items-center justify-center cursor-pointer"
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  backgroundColor: 'rgba(0,0,0,0.6)',
+                  color: 'white',
+                  border: 'none',
+                  fontSize: '1rem',
+                  lineHeight: 1,
+                }}
+                title="Remove cover photo"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Upload zone (shown when no cover) */}
+          {!coverUrl && (
+            <div
+              className="border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors"
+              style={{
+                borderColor: coverUploading ? '#C29B40' : 'rgba(0,35,73,0.2)',
+                backgroundColor: coverUploading ? 'rgba(194,155,64,0.04)' : 'rgba(0,35,73,0.02)',
+                padding: '2.5rem 1rem',
+                minHeight: '140px',
+              }}
+              onClick={() => !coverUploading && coverFileRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault()
+                const file = e.dataTransfer.files?.[0]
+                if (file) handleCoverFile(file)
+              }}
+            >
+              {coverUploading ? (
+                <p className="font-body" style={{ fontSize: '0.875rem', color: '#C29B40' }}>
+                  Uploading...
+                </p>
+              ) : (
+                <>
+                  <p className="font-body mb-2" style={{ fontSize: '0.875rem', color: '#002349' }}>
+                    Drag & drop or{' '}
+                    <span style={{ color: '#C29B40', textDecoration: 'underline' }}>browse</span>
+                  </p>
+                  <p className="font-body" style={{ fontSize: '0.75rem', color: '#999999' }}>
+                    JPG, PNG, WebP recommended
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* URL toggle */}
+          <button
+            onClick={() => setShowCoverUrlInput(!showCoverUrlInput)}
+            className="font-body bg-transparent border-none cursor-pointer mt-2"
+            style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999999' }}
+          >
+            {showCoverUrlInput ? '− Hide URL input' : '+ Paste URL instead'}
+          </button>
+
+          {showCoverUrlInput && (
+            <div className="mt-2">
+              <input
+                type="text"
+                value={coverUrl}
+                onChange={(e) => setCoverUrl(e.target.value)}
+                placeholder="https://..."
+                className="font-body w-full px-3 py-2.5 outline-none border"
+                style={{ fontSize: '0.875rem', color: '#002349', borderColor: 'rgba(0,0,0,0.12)' }}
+              />
+            </div>
           )}
         </div>
 
