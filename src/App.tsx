@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { useLenis } from 'lenis/react'
 import gsap from 'gsap'
@@ -105,15 +105,25 @@ export default function App() {
   return (
     <HelmetProvider>
       <BrowserRouter>
-        <StickyHeader />
-<Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/blog/admin" element={<BlogAdmin />} />
-          <Route path="/resources" element={<Resources />} />
-        </Routes>
+        <AppShell />
       </BrowserRouter>
     </HelmetProvider>
+  )
+}
+
+function AppShell() {
+  const location = useLocation()
+  const isAdmin = location.pathname === '/blog/admin'
+  return (
+    <>
+      {!isAdmin && <StickyHeader />}
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/admin" element={<BlogAdmin />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/resources" element={<Resources />} />
+        </Routes>
+    </>
   )
 }
