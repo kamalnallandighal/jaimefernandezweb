@@ -25,7 +25,9 @@ Quality and attention to detail are non-negotiable.
 - React Hook Form + Zod — form validation
 - React Router DOM — multi-page routing
 - Supabase — blog post database
-- react-markdown — blog post body rendering
+- TipTap (@tiptap/react + extensions) — WYSIWYG blog body editor
+- marked — legacy markdown→HTML conversion on post load
+- dompurify — HTML sanitization for blog post rendering
 - react-helmet-async — SEO meta tags on all pages
 - Lucide React — icons
 
@@ -262,7 +264,7 @@ Used for: cover photos and inline body images uploaded via blog admin
 ## Environment Variables (.env.local)
 VITE_SUPABASE_URL=✓ configured
 VITE_SUPABASE_ANON_KEY=✓ configured
-VITE_GOOGLE_PLACES_API_KEY= (still empty — home eval address autocomplete won't work)
+VITE_GOOGLE_PLACES_API_KEY=✓ configured (home eval address autocomplete working)
 VITE_SHEET_BEST_URL= (still empty — restaurant guide form submission won't work)
 
 Leave empty vars blank — null guards in the code handle missing values gracefully.
@@ -281,6 +283,7 @@ src/
     Footer.tsx                ← Navy, responsive grid, used on homepage + blog
     FixedBrokerageBadge.tsx   ← REMOVED from use — do not add back
     PostCard.tsx              ← Blog card: large (4:5) / small (square) / grid (3:2)
+    RichTextEditor.tsx        ← TipTap WYSIWYG editor with WordPress-style toolbar (used in BlogAdmin)
     ErrorBoundary.tsx         ← Catches crashes, shows error instead of blank
     ui/                       ← shadcn components auto-generated here
   pages/
@@ -331,21 +334,34 @@ src/
   - Route bug fixed: `/blog/admin` was matching `/blog/:slug` — reordered routes
   - AppShell pattern: StickyHeader hidden on /blog/admin route
   - VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY configured in .env.local and Vercel
-- **Session 8 (current):**
-  - Vercel env var fix: `vite.config.ts` now uses `define` to explicitly map `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` from `process.env` — required because Vite's automatic `VITE_` prefix injection wasn't working on Vercel
-  - Blog redesign built and saved on `blog-redesign` branch (NOT yet merged to main):
-    - Blog index: featured post driven by `featured` flag on Post, responsive ALL view grid (55%/1fr → single col mobile), uniform 3-col grid on category filter, responsive padding throughout
-    - Admin editor: two-column desktop layout (body left, metadata right 380px sticky), 16:9 cover photo box, rounded tag pills, ★ featured toggle with automatic un-featuring of previous post, PostList collapses to cards on mobile
-    - Individual post: fluid header padding (`clamp`), related posts use `grid` (3:2) PostCard variant
+- **Session 8:**
+  - Vercel env var fix: `vite.config.ts` now uses `define` to explicitly map `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` from `process.env`
+  - Blog redesign (built on `blog-redesign` branch, merged to main session 9):
+    - Blog index: featured post driven by `featured` flag, responsive ALL view grid, uniform 3-col grid on category filter
+    - Admin editor: two-column desktop layout, 16:9 cover photo box, rounded tag pills, ★ featured toggle
+    - Individual post: fluid header padding (`clamp`), related posts use `grid` PostCard variant
     - `Post` type updated: `featured: boolean` field added to `src/lib/supabase.ts`
-  - Blog redesign requires this SQL before merging: `ALTER TABLE posts ADD COLUMN featured boolean NOT NULL DEFAULT false;`
+  - Supabase SQL run: `ALTER TABLE posts ADD COLUMN featured boolean NOT NULL DEFAULT false;`
+- **Session 9 (current):**
+  - Blog admin PostEditor replaced with 3-step wizard: Write → Details & SEO → Cover
+    - Step 1: Title + slug + TipTap WYSIWYG editor (full WordPress-style toolbar)
+    - Step 2: Category, tags, excerpt, read time, featured toggle, SEO title/desc, Google SERP preview
+    - Step 3: 16:9 cover photo upload, published toggle — Publish button
+    - Framer Motion slide transitions between steps; step tabs + pill dots nav in bottom bar
+  - TipTap replaces plain textarea — body field now stores HTML (was markdown)
+  - Legacy markdown posts auto-convert to HTML on load via `marked`
+  - BlogPost.tsx: swapped `react-markdown` for `dangerouslySetInnerHTML` + DOMPurify sanitization
+  - `RichTextEditor.tsx` created: reusable TipTap wrapper with full toolbar
+  - ProseMirror + prose-jaime HTML styles added to `index.css`
+  - Admin header: RLSIR logo now links to homepage; "View Blog →" link added
+  - `ScrollToTop` component in App.tsx: every route change scrolls to top
+  - VITE_GOOGLE_PLACES_API_KEY confirmed configured and working
+  - `blog-redesign` branch merged to main and deployed to Vercel
 
 ### Needs Building (Priority Order)
-1. Review + merge `blog-redesign` branch (run Supabase SQL first — see above)
-2. Add VITE_GOOGLE_PLACES_API_KEY to .env.local + Vercel (home eval address autocomplete)
-3. Add VITE_SHEET_BEST_URL to .env.local + Vercel (restaurant guide form)
-4. Real headshot photo for About section (currently grey placeholder)
-5. Client to provide actual Calendly URL (currently using brogan-mcguire-creative/30min)
+1. Add VITE_SHEET_BEST_URL to .env.local + Vercel (restaurant guide form)
+2. Real headshot photo for About section (currently grey placeholder)
+3. Client to provide actual Calendly URL (currently using brogan-mcguire-creative/30min)
 
 ## Approved Design (Locked)
 
