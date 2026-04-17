@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, type Post } from '@/lib/supabase'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 
-const ADMIN_PASSWORD = 'JaimeAdmin2024!'
+const ADMIN_USERNAME = 'jaime'
+const ADMIN_PASSWORD = 'Test123'
 
 const CATEGORIES = [
   'Market Insights',
@@ -65,17 +66,18 @@ function Toast({ toast, onDismiss }: { toast: ToastMsg; onDismiss: (id: number) 
 // ─── Login ────────────────────────────────────────────────────────────────────
 
 function LoginGate({ onSuccess }: { onSuccess: () => void }) {
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [shake, setShake] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
   const tryLogin = () => {
-    if (password === ADMIN_PASSWORD) {
+    if (username.trim().toLowerCase() === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       localStorage.setItem('blog_admin_auth', 'authenticated')
       onSuccess()
     } else {
       setShake(true)
-      setErrorMsg('Incorrect password')
+      setErrorMsg('Incorrect username or password')
       setTimeout(() => setShake(false), 500)
     }
   }
@@ -102,8 +104,21 @@ function LoginGate({ onSuccess }: { onSuccess: () => void }) {
         style={{ width: '100%', maxWidth: '320px' }}
       >
         <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && tryLogin()}
+          className="font-body w-full px-4 py-3 outline-none mb-2"
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            color: 'white',
+          }}
+        />
+        <input
           type="password"
-          placeholder="Enter password"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && tryLogin()}
