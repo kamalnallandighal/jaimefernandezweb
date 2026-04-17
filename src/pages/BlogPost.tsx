@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import ReactMarkdown from 'react-markdown'
+import DOMPurify from 'dompurify'
 import { supabase, type Post } from '@/lib/supabase'
 import PostCard from '@/components/PostCard'
 
@@ -228,9 +228,10 @@ export default function BlogPost() {
 
         {/* Post Body */}
         <div className="max-w-2xl mx-auto px-6 py-14">
-          <div className="prose-jaime">
-            <ReactMarkdown>{post.body}</ReactMarkdown>
-          </div>
+          <div
+            className="prose-jaime"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body || '') }}
+          />
         </div>
 
         {/* Tags */}
