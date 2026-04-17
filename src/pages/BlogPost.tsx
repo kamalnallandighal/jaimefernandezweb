@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import ReactMarkdown from 'react-markdown'
+import DOMPurify from 'dompurify'
 import { supabase, type Post } from '@/lib/supabase'
 import PostCard from '@/components/PostCard'
 
@@ -177,7 +177,7 @@ export default function BlogPost() {
         )}
 
         {/* Post Header */}
-        <div className="max-w-3xl mx-auto px-6 pt-14 pb-8">
+        <div className="max-w-3xl mx-auto px-6 pb-8" style={{ paddingTop: 'clamp(32px, 5vw, 56px)' }}>
           {post.category && (
             <span
               className="font-body block mb-4"
@@ -228,9 +228,10 @@ export default function BlogPost() {
 
         {/* Post Body */}
         <div className="max-w-2xl mx-auto px-6 py-14">
-          <div className="prose-jaime">
-            <ReactMarkdown>{post.body}</ReactMarkdown>
-          </div>
+          <div
+            className="prose-jaime"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body || '') }}
+          />
         </div>
 
         {/* Tags */}
@@ -286,7 +287,7 @@ export default function BlogPost() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {relatedPosts.map((p) => (
-                <PostCard key={p.id} post={p} size="small" />
+                <PostCard key={p.id} post={p} size="grid" />
               ))}
             </div>
           </section>
