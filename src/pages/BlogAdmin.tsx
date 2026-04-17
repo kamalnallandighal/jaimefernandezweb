@@ -35,6 +35,19 @@ function formatDate(dateStr: string) {
   })
 }
 
+async function uploadImage(file: File): Promise<string> {
+  if (!supabase) throw new Error('Supabase not configured')
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const path = `posts/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const { error } = await supabase.storage.from('blog-images').upload(path, file, {
+    cacheControl: '3600',
+    upsert: false,
+  })
+  if (error) throw error
+  const { data } = supabase.storage.from('blog-images').getPublicUrl(path)
+  return data.publicUrl
+}
+
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
 interface ToastMsg {

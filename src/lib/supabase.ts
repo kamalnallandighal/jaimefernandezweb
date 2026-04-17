@@ -70,4 +70,19 @@ create policy "Admin full access"
   on posts for all
   using (true)
   with check (true);
+
+-- STORAGE SETUP (run after creating "blog-images" public bucket in dashboard):
+-- In Supabase Dashboard → Storage → New Bucket → name: blog-images → Public: ON
+-- Then in SQL Editor run:
+create policy "Public read blog images"
+  on storage.objects for select
+  using (bucket_id = 'blog-images');
+
+create policy "Admin upload blog images"
+  on storage.objects for insert
+  with check (bucket_id = 'blog-images');
+
+create policy "Admin delete blog images"
+  on storage.objects for delete
+  using (bucket_id = 'blog-images');
 */
