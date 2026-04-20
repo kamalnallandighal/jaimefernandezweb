@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useLenis } from 'lenis/react'
 import { HelmetProvider } from 'react-helmet-async'
-import { useLenis } from 'lenis/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import StickyHeader from '@/components/StickyHeader'
@@ -13,11 +12,17 @@ import HomeEvalSection from '@/components/HomeEvalSection'
 import RestaurantGuideSection from '@/components/RestaurantGuideSection'
 import ReviewsSection from '@/components/ReviewsSection'
 import CalendlySection from '@/components/CalendlySection'
+import LetsStayInTouchSection from '@/components/LetsStayInTouchSection'
 import Footer from '@/components/Footer'
 import Resources from '@/pages/Resources'
 import Blog from '@/pages/Blog'
 import BlogPost from '@/pages/BlogPost'
 import BlogAdmin from '@/pages/BlogAdmin'
+import StartSearch from '@/pages/StartSearch'
+import HomeEvalPage from '@/pages/HomeEvalPage'
+import BookACall from '@/pages/BookACall'
+import RestaurantGuidePage from '@/pages/RestaurantGuidePage'
+import LetsStayInTouch from '@/pages/LetsStayInTouch'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -97,6 +102,7 @@ function HomePage() {
       <RestaurantGuideSection />
       <ReviewsSection />
       <CalendlySection />
+      <LetsStayInTouchSection />
       <Footer />
     </main>
   )
@@ -147,6 +153,11 @@ function AppShell() {
           <Route path="/blog/admin" element={<BlogAdmin />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/start-search" element={<StartSearch />} />
+          <Route path="/home-eval" element={<HomeEvalPage />} />
+          <Route path="/book-a-call" element={<BookACall />} />
+          <Route path="/restaurant-guide" element={<RestaurantGuidePage />} />
+          <Route path="/lets-stay-in-touch" element={<LetsStayInTouch />} />
         </Routes>
     </>
   )

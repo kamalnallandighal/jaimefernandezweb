@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { marked } from 'marked'
 import { supabase, type Post } from '@/lib/supabase'
+import { generateSEO } from '@/lib/seoAI'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { useWindowWidth } from '@/lib/useWindowWidth'
 import RichTextEditor from '@/components/RichTextEditor'
@@ -285,6 +286,38 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
   const [saving, setSaving] = useState(false)
   const [coverUploading, setCoverUploading] = useState(false)
   const [showCoverUrlInput, setShowCoverUrlInput] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+
+  // ── AI auto-fill ──────────────────────────────────────────────────────────
+  const runAI = async () => {
+    if (!title.trim() || !body.trim()) {
+      addToast('Write a title and some content first', false)
+      return
+    }
+    setAiLoading(true)
+    try {
+      // Pull previous posts for context so the AI learns over time
+      const previousPosts = supabase
+        ? (await supabase.from('posts').select('title, tags, category').eq('published', true).order('published_at', { ascending: false }).limit(20)).data ?? []
+        : []
+
+      const result = await generateSEO(title, body, previousPosts)
+
+      if (result.category && CATEGORIES.includes(result.category)) setCategory(result.category)
+      if (result.tags?.length > 0) setTags(result.tags)
+      if (result.excerpt) setExcerpt(result.excerpt)
+      if (result.seo_title) setSeoTitle(result.seo_title)
+      if (result.seo_description) setSeoDesc(result.seo_description)
+
+      addToast('SEO fields filled ✓ — review and adjust as needed', true)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'AI request failed'
+      addToast(msg.includes('VITE_CLAUDE_API_KEY') ? 'Claude API key not configured yet' : 'AI failed — try again', false)
+      console.error('[SEO AI]', err)
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   const coverFileRef = useRef<HTMLInputElement>(null)
   const tagInputRef = useRef<HTMLInputElement>(null)
@@ -435,6 +468,58 @@ function PostEditor({ post, onBack, onSave, addToast }: PostEditorProps) {
   // ── Step 2: Details & SEO ─────────────────────────────────────────────────
   const step2Content = (
     <div style={{ maxWidth: '720px' }}>
+
+      {/* AI auto-fill button */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', paddingBottom: '24px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div>
+          <p className="font-body" style={{ fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#002349', fontWeight: 600 }}>
+            Details &amp; SEO
+          </p>
+          <p className="font-body" style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+            Fill manually or let AI analyze your post
+          </p>
+        </div>
+        <button
+          onClick={runAI}
+          disabled={aiLoading}
+          title={aiLoading ? 'Analyzing your post...' : 'Use Claude AI to generate SEO-optimized metadata'}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            backgroundColor: aiLoading ? 'rgba(194,155,64,0.10)' : '#002349',
+            color: aiLoading ? '#C29B40' : '#ffffff',
+            border: aiLoading ? '1px solid rgba(194,155,64,0.30)' : '1px solid #002349',
+            cursor: aiLoading ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s ease',
+            fontFamily: "'Source Sans 3', sans-serif",
+            fontSize: '11px',
+            fontWeight: 700,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+          }}
+          onMouseEnter={e => { if (!aiLoading) { (e.currentTarget as HTMLElement).style.backgroundColor = '#C29B40'; (e.currentTarget as HTMLElement).style.borderColor = '#C29B40' } }}
+          onMouseLeave={e => { if (!aiLoading) { (e.currentTarget as HTMLElement).style.backgroundColor = '#002349'; (e.currentTarget as HTMLElement).style.borderColor = '#002349' } }}
+        >
+          {aiLoading ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+                <path d="M21 12a9 9 0 11-6.219-8.56" />
+              </svg>
+              Analyzing...
+            </>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+              </svg>
+              Auto-fill with AI
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Category */}
       <div style={{ marginBottom: '24px' }}>
         <label className="font-body block" style={{ fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999', marginBottom: '8px' }}>
