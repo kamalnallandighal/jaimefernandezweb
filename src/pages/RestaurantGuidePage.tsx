@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Check, UtensilsCrossed, MapPin, Star } from 'lucide-react'
 import Footer from '@/components/Footer'
-import { JAIME } from '@/lib/constants'
 import { useWindowWidth } from '@/lib/useWindowWidth'
 
 const SHEET_URL = import.meta.env.VITE_SHEET_BEST_URL as string | undefined

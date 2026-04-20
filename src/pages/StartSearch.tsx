@@ -96,8 +96,6 @@ export default function StartSearch() {
     setSubmitted(true)
   }
 
-  const cardPad = isMobile ? '40px 28px' : '72px 80px'
-
   return (
     <>
       <Helmet>
