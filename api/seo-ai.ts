@@ -1,5 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
+// Trim to the last complete word at or under the limit, never mid-word.
+function trimToWord(str: string, limit: number): string {
+  if (!str) return ''
+  str = str.trim()
+  if (str.length <= limit) return str
+  const cut = str.slice(0, limit)
+  const lastSpace = cut.lastIndexOf(' ')
+  return lastSpace > 0 ? cut.slice(0, lastSpace).trimEnd() : cut
+}
+
 const SYSTEM_PROMPT = `You are an expert SEO strategist specializing in luxury real estate content for the Scottsdale, Arizona market. You optimize blog posts for Jaime Fernandez, a top luxury agent at Russ Lyon Sotheby's International Realty with over $2.1B in closed transactions and deep roots in the 85254 zip code.
 
 ═══════════════════════════════════════
@@ -78,9 +88,16 @@ SEO DESCRIPTION RULES (150-160 chars)
 • Primary keyword + 1 secondary keyword, both natural
 • End with a soft CTA: "Read the full guide.", "See what the data shows.", "Learn what buyers need to know."
 
+CHARACTER LIMITS — these are hard limits, never exceed them:
+• excerpt: 160 characters maximum
+• seo_title: 60 characters maximum
+• seo_description: 160 characters maximum
+
+Count characters before writing each field. If you're over, shorten to the last complete word within the limit.
+
 Return ONLY valid JSON. No explanation, no markdown code fences, no extra text whatsoever.
 Exact schema:
-{"category":"string","tags":["string"],"excerpt":"string (max 155 chars)","seo_title":"string (max 60 chars)","seo_description":"string (max 160 chars)"}`
+{"category":"string","tags":["string"],"excerpt":"string (max 160 chars)","seo_title":"string (max 60 chars)","seo_description":"string (max 160 chars)"}`
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -148,9 +165,9 @@ Generate SEO metadata for this post now.`
 
   try {
     const result = JSON.parse(clean)
-    result.excerpt = (result.excerpt as string).slice(0, 155)
-    result.seo_title = (result.seo_title as string).slice(0, 60)
-    result.seo_description = (result.seo_description as string).slice(0, 160)
+    result.excerpt = trimToWord(result.excerpt as string, 160)
+    result.seo_title = trimToWord(result.seo_title as string, 60)
+    result.seo_description = trimToWord(result.seo_description as string, 160)
     return res.status(200).json(result)
   } catch {
     return res.status(502).json({ error: 'Failed to parse AI response', raw: raw.slice(0, 300) })
