@@ -265,7 +265,8 @@ Used for: cover photos and inline body images uploaded via blog admin
 VITE_SUPABASE_URL=✓ configured
 VITE_SUPABASE_ANON_KEY=✓ configured
 VITE_GOOGLE_PLACES_API_KEY=✓ configured (home eval address autocomplete working)
-VITE_SHEET_BEST_URL= (still empty — restaurant guide form submission won't work)
+VITE_SHEET_BEST_URL= (still empty — all lead-capture forms will fail silently until set, or until Supabase migration)
+CLAUDE_API_KEY= (no VITE_ prefix — server-side only in Vercel env vars, NOT in .env.local — activates AI SEO autofill)
 
 Leave empty vars blank — null guards in the code handle missing values gracefully.
 
@@ -289,13 +290,23 @@ src/
   pages/
     Blog.tsx                  ← "The Narrative" blog index, Newsletter, uses Footer
     BlogPost.tsx              ← Individual post page
-    BlogAdmin.tsx             ← Password-protected CMS
+    BlogAdmin.tsx             ← Password-protected CMS with 3-step wizard + AI SEO autofill
     Resources.tsx             ← Placeholder (not built yet)
+    StartSearch.tsx           ← Hidden: buyer intake form (/start-search)
+    HomeEvalPage.tsx          ← Hidden: home valuation form (/home-eval)
+    BookACall.tsx             ← Hidden: full-page Calendly (/book-a-call)
+    RestaurantGuidePage.tsx   ← Hidden: restaurant guide capture (/restaurant-guide)
+    LetsStayInTouch.tsx       ← Hidden: name+phone form (/lets-stay-in-touch)
+  components/
+    LetsStayInTouchSection.tsx ← Homepage section between Calendly and Footer
   lib/
     supabase.ts               ← Supabase client + Post type + SQL schema comment
+    seoAI.ts                  ← AI SEO utility — calls /api/seo-ai serverless function
     constants.ts              ← Jaime's contact info and site constants (incl. JAIME.calendly)
     useWindowWidth.ts         ← Responsive hook, used in all sections
     utils.ts                  ← shadcn cn() utility
+api/
+  seo-ai.ts                   ← Vercel serverless function — holds CLAUDE_API_KEY server-side, calls Anthropic
   App.tsx                     ← BrowserRouter + HelmetProvider + AppShell (hides StickyHeader on /blog/admin) + Routes + GSAP setup + HomePage
   main.tsx                    ← Entry point, ReactLenis root, ErrorBoundary
   index.css                   ← Design tokens, shadcn overrides, .prose-jaime, hero-video mobile zoom
@@ -342,7 +353,27 @@ src/
     - Individual post: fluid header padding (`clamp`), related posts use `grid` PostCard variant
     - `Post` type updated: `featured: boolean` field added to `src/lib/supabase.ts`
   - Supabase SQL run: `ALTER TABLE posts ADD COLUMN featured boolean NOT NULL DEFAULT false;`
-- **Session 9 (current):**
+- **Session 10 (current):**
+  - 5 hidden lead-capture subpages added (noindex/nofollow, not in nav):
+    - `/start-search` — buyer intake form: bedrooms, bathrooms, budget, areas, timeline, lender status, property type, name/email/phone
+    - `/home-eval` — dedicated home valuation: address + timeline pills + name/email/phone + gold stats strip
+    - `/book-a-call` — full-page Calendly embed with navy info panel (reuses CalendlyWidget logic)
+    - `/restaurant-guide` — richer restaurant guide with 3 feature icons + name/email form
+    - `/lets-stay-in-touch` — full-page dark navy layout, name + phone (required) + email (optional)
+  - `LetsStayInTouchSection` added to homepage between CalendlySection and Footer (white bg, name + email inline form)
+  - All forms POST to `VITE_SHEET_BEST_URL` when configured; show success state regardless
+  - NOTE: Forms will be migrated to Supabase lead storage in a future session (decided in session 10)
+  - AI-powered SEO autofill on blog admin Step 2:
+    - "Auto-fill with AI" button at top of Details & SEO step
+    - Calls `api/seo-ai.ts` Vercel serverless function (key never exposed to client)
+    - Uses Claude Haiku (`claude-haiku-4-5-20251001`) — cheap, ~cents per post
+    - Fetches last 20 published posts from Supabase as context so AI learns over time and avoids tag repetition
+    - Fills: category, tags, excerpt, SEO title, SEO description
+    - Hard character limits enforced server-side with word-boundary trimming (no mid-word cuts)
+    - Requires `CLAUDE_API_KEY` (no VITE_ prefix) in Vercel env vars — NOT yet configured
+  - `vercel.json` updated: `/api/*` routes exempted from SPA rewrite so serverless functions work
+  - `@vercel/node` added as devDependency for serverless function types
+- **Session 9:**
   - Blog admin PostEditor replaced with 3-step wizard: Write → Details & SEO → Cover
     - Step 1: Title + slug + TipTap WYSIWYG editor (full WordPress-style toolbar)
     - Step 2: Category, tags, excerpt, read time, featured toggle, SEO title/desc, Google SERP preview
@@ -354,14 +385,16 @@ src/
   - `RichTextEditor.tsx` created: reusable TipTap wrapper with full toolbar
   - ProseMirror + prose-jaime HTML styles added to `index.css`
   - Admin header: RLSIR logo now links to homepage; "View Blog →" link added
-  - `ScrollToTop` component in App.tsx: every route change scrolls to top
+  - `ScrollToTop` component in App.tsx: every route change scrolls to top (⚠️ WORK IN PROGRESS — not fully working yet; Lenis + browser scroll restoration fighting each other on home→blog navigation)
   - VITE_GOOGLE_PLACES_API_KEY confirmed configured and working
   - `blog-redesign` branch merged to main and deployed to Vercel
 
 ### Needs Building (Priority Order)
-1. Add VITE_SHEET_BEST_URL to .env.local + Vercel (restaurant guide form)
-2. Real headshot photo for About section (currently grey placeholder)
-3. Client to provide actual Calendly URL (currently using brogan-mcguire-creative/30min)
+1. Add `CLAUDE_API_KEY` to Vercel env vars to activate AI SEO autofill
+2. Migrate all lead-capture forms (hidden pages + homepage) from SHEET_BEST_URL to Supabase leads table
+3. Real headshot photo for About section (currently grey placeholder)
+4. Client to provide actual Calendly URL (currently using brogan-mcguire-creative/30min)
+5. Add VITE_SHEET_BEST_URL to .env.local + Vercel (interim, until Supabase migration done)
 
 ## Approved Design (Locked)
 
