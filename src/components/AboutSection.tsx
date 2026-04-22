@@ -1,4 +1,3 @@
-import { User } from 'lucide-react'
 import { useWindowWidth } from '@/lib/useWindowWidth'
 
 export default function AboutSection() {
@@ -16,15 +15,13 @@ export default function AboutSection() {
         alignItems: 'center',
       }}>
 
-        {/* Photo placeholder */}
-        <div style={{
-          aspectRatio: isMobile ? '4/3' : '4/5',
-          backgroundColor: '#eceae5',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <User size={64} color="#b0ac9e" strokeWidth={1} />
+        {/* Headshot */}
+        <div style={{ aspectRatio: isMobile ? '4/3' : '4/5', overflow: 'hidden' }}>
+          <img
+            src="/assets/jaime.jpeg"
+            alt="Jaime Fernandez — Russ Lyon Sotheby's International Realty"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+          />
         </div>
 
         {/* Content */}
