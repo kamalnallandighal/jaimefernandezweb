@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useLenis } from 'lenis/react'
+import { useWindowWidth } from '@/lib/useWindowWidth'
 import { HelmetProvider } from 'react-helmet-async'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -37,6 +38,9 @@ const REVEAL_SECTIONS = [
 ]
 
 function HomePage() {
+  const width = useWindowWidth()
+  const isMobile = width < 768
+
   // Keep ScrollTrigger positions in sync with Lenis virtual scroll
   useLenis(() => { ScrollTrigger.update() })
 
@@ -98,8 +102,10 @@ function HomePage() {
       <HeroSection />
       <AboutSection />
       <MagicZipSection />
-      <HomeEvalSection />
-      <RestaurantGuideSection />
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
+        <HomeEvalSection />
+        <RestaurantGuideSection />
+      </div>
       <ReviewsSection />
       <CalendlySection />
       <LetsStayInTouchSection />
@@ -153,11 +159,11 @@ function AppShell() {
           <Route path="/blog/admin" element={<BlogAdmin />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/resources" element={<Resources />} />
-          <Route path="/start-search" element={<StartSearch />} />
+          <Route path="/start-your-search" element={<StartSearch />} />
           <Route path="/home-eval" element={<HomeEvalPage />} />
-          <Route path="/book-a-call" element={<BookACall />} />
-          <Route path="/restaurant-guide" element={<RestaurantGuidePage />} />
-          <Route path="/lets-stay-in-touch" element={<LetsStayInTouch />} />
+          <Route path="/book" element={<BookACall />} />
+          <Route path="/dining-guide" element={<RestaurantGuidePage />} />
+          <Route path="/stay-in-touch" element={<LetsStayInTouch />} />
         </Routes>
     </>
   )

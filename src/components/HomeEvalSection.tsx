@@ -15,8 +15,16 @@ const PROPERTY_TYPES = [
   { id: 'custom-luxury', icon: Gem,        label: 'Custom / Luxury', desc: 'Estate or custom build'    },
 ] as const
 
+const TIMELINES = [
+  'Ready to sell now',
+  '1–3 months',
+  '3–6 months',
+  '6–12 months',
+  'Just curious about value',
+]
+
 type PropertyType = typeof PROPERTY_TYPES[number]['id']
-type Step = 1 | 2 | 3
+type Step = 1 | 2 | 3 | 4 | 5
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Source Sans 3', sans-serif",
@@ -244,17 +252,28 @@ export default function HomeEvalSection() {
   // Step 2
   const [propertyType, setPropertyType] = useState<PropertyType | null>(null)
 
-  // Step 3
+  // Step 3 — timeline
+  const [timeline, setTimeline] = useState('')
+
+  // Step 4 — contact
   const [name,  setName]  = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [tcpa,  setTcpa]  = useState(false)
 
+  // Step 5 — optional love note
+  const [loveNote, setLoveNote] = useState('')
+
   // Stable callbacks for AddressInput — useCallback so they never change identity
   const handleAddressConfirmed = useCallback((addr: string) => setConfirmedAddress(addr), [])
   const handleAddressCleared   = useCallback(() => setConfirmedAddress(''), [])
 
-  const canProceed = step === 1 ? addressValid : step === 2 ? propertyType !== null : name.trim() !== '' && phone.trim() !== '' && email.trim() !== '' && tcpa
+  const canProceed =
+    step === 1 ? addressValid :
+    step === 2 ? propertyType !== null :
+    step === 3 ? timeline !== '' :
+    step === 4 ? name.trim() !== '' && phone.trim() !== '' && email.trim() !== '' && tcpa :
+    true // step 5 is optional
 
   const goTo = (next: Step, dir: number) => {
     if (animating) return
@@ -265,7 +284,7 @@ export default function HomeEvalSection() {
   }
 
   const handleSubmit = async () => {
-    if (!canProceed || submitting) return
+    if (submitting) return
     setSubmitting(true)
     try {
       if (SHEET_URL) {
@@ -275,7 +294,9 @@ export default function HomeEvalSection() {
           body: JSON.stringify({
             Address: confirmedAddress,
             'Property Type': propertyType,
+            'Selling Timeline': timeline,
             Name: name, Phone: phone, Email: email,
+            'Why I Love My Home': loveNote || '(not provided)',
             'Submitted At': new Date().toISOString(),
           }),
         })
@@ -289,7 +310,9 @@ export default function HomeEvalSection() {
   const stepLabels: Record<Step, string> = {
     1: 'Property Address',
     2: 'Property Type',
-    3: 'Your Information',
+    3: 'Selling Timeline',
+    4: 'Your Information',
+    5: 'One More Thing',
   }
 
   return (
@@ -350,7 +373,7 @@ export default function HomeEvalSection() {
           <div style={{ height: '3px', backgroundColor: 'rgba(194,155,64,0.15)' }}>
             <div style={{
               height: '100%', backgroundColor: '#C29B40',
-              width: `${(step / 3) * 100}%`,
+              width: `${(step / 5) * 100}%`,
               transition: 'width 0.45s cubic-bezier(0.4,0,0.2,1)',
             }} />
           </div>
@@ -358,7 +381,7 @@ export default function HomeEvalSection() {
           {/* Step label row */}
           <div style={{ padding: isMobile ? '20px 24px 0' : '28px 56px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#bbb' }}>
-              Step {step} of 3
+              Step {step} of 5
             </span>
             <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#C29B40' }}>
               {stepLabels[step]}
@@ -424,8 +447,46 @@ export default function HomeEvalSection() {
               </div>
             )}
 
-            {/* Step 3 */}
+            {/* Step 3 — Selling Timeline */}
             {step === 3 && (
+              <div style={{ minHeight: '320px' }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 'clamp(26px, 4vw, 42px)', fontStyle: 'italic', fontWeight: 300, color: '#002349', margin: 0, marginBottom: '40px', lineHeight: 1.2 }}>
+                  When are you thinking<br />of selling?
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {TIMELINES.map(opt => {
+                    const sel = timeline === opt
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setTimeline(opt)}
+                        style={{
+                          fontFamily: "'Source Sans 3', sans-serif",
+                          fontSize: '14px', fontWeight: sel ? 600 : 300,
+                          textAlign: 'left',
+                          padding: '18px 24px',
+                          border: `1px solid ${sel ? '#C29B40' : 'rgba(0,35,73,0.12)'}`,
+                          backgroundColor: sel ? 'rgba(194,155,64,0.04)' : 'transparent',
+                          color: sel ? '#002349' : '#555',
+                          cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          transition: 'all 0.18s ease',
+                        }}
+                        onMouseEnter={e => { if (!sel) e.currentTarget.style.borderColor = 'rgba(194,155,64,0.50)' }}
+                        onMouseLeave={e => { if (!sel) e.currentTarget.style.borderColor = 'rgba(0,35,73,0.12)' }}
+                      >
+                        {opt}
+                        {sel && <Check size={14} color="#C29B40" strokeWidth={2.5} />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Step 4 — Contact */}
+            {step === 4 && (
               <div style={{ minHeight: '320px' }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 'clamp(26px, 4vw, 42px)', fontStyle: 'italic', fontWeight: 300, color: '#002349', margin: 0, marginBottom: '40px', lineHeight: 1.2 }}>
                   Where should we send<br />your valuation?
@@ -473,6 +534,32 @@ export default function HomeEvalSection() {
                 </label>
               </div>
             )}
+
+            {/* Step 5 — Optional love note */}
+            {step === 5 && (
+              <div style={{ minHeight: '280px' }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 'clamp(24px, 3.5vw, 38px)', fontStyle: 'italic', fontWeight: 300, color: '#002349', margin: 0, marginBottom: '12px', lineHeight: 1.2 }}>
+                  Why do you love<br />your home?
+                </h3>
+                <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '14px', fontWeight: 300, color: '#888', lineHeight: 1.6, margin: '0 0 32px' }}>
+                  Optional — but Jaime loves knowing what makes a home special before writing the analysis.
+                </p>
+                <textarea
+                  value={loveNote}
+                  onChange={e => setLoveNote(e.target.value)}
+                  rows={4}
+                  placeholder="The backyard at sunset, the kitchen renovation we're proud of, walkable to everything..."
+                  style={{
+                    ...underlineInput,
+                    resize: 'vertical',
+                    borderBottom: '1px solid rgba(0,35,73,0.25)',
+                    paddingTop: '12px',
+                  }}
+                  onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
+                  onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
+                />
+              </div>
+            )}
           </div>
 
           {/* Navigation */}
@@ -499,7 +586,7 @@ export default function HomeEvalSection() {
               </button>
             )}
 
-            {step < 3 ? (
+            {step < 5 ? (
               <button
                 onClick={() => canProceed && goTo((step + 1) as Step, 1)}
                 style={{
@@ -517,23 +604,41 @@ export default function HomeEvalSection() {
                 Continue <ChevronRight size={14} strokeWidth={2} />
               </button>
             ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={!canProceed || submitting}
-                style={{
-                  fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 700,
-                  letterSpacing: '0.20em', textTransform: 'uppercase',
-                  backgroundColor: canProceed && !submitting ? '#002349' : 'rgba(0,35,73,0.25)',
-                  color: '#ffffff', border: 'none',
-                  padding: '18px 44px',
-                  cursor: canProceed && !submitting ? 'pointer' : 'default',
-                  transition: 'background-color 0.2s ease',
-                }}
-                onMouseEnter={e => { if (canProceed) e.currentTarget.style.backgroundColor = 'rgba(0,35,73,0.82)' }}
-                onMouseLeave={e => { if (canProceed) e.currentTarget.style.backgroundColor = '#002349' }}
-              >
-                {submitting ? 'Sending…' : 'Get My Valuation'}
-              </button>
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '12px', alignItems: isMobile ? 'flex-start' : 'center' }}>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  style={{
+                    fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 700,
+                    letterSpacing: '0.20em', textTransform: 'uppercase',
+                    backgroundColor: !submitting ? '#002349' : 'rgba(0,35,73,0.25)',
+                    color: '#ffffff', border: 'none',
+                    padding: '18px 44px',
+                    cursor: !submitting ? 'pointer' : 'default',
+                    transition: 'background-color 0.2s ease',
+                  }}
+                  onMouseEnter={e => { if (!submitting) e.currentTarget.style.backgroundColor = 'rgba(0,35,73,0.82)' }}
+                  onMouseLeave={e => { if (!submitting) e.currentTarget.style.backgroundColor = '#002349' }}
+                >
+                  {submitting ? 'Sending…' : 'Get My Valuation'}
+                </button>
+                {!submitting && (
+                  <button
+                    onClick={handleSubmit}
+                    style={{
+                      fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 400,
+                      letterSpacing: '0.12em', textTransform: 'uppercase',
+                      color: '#aaa', background: 'none', border: 'none',
+                      cursor: 'pointer', padding: '4px 0',
+                      transition: 'color 0.2s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#002349')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#aaa')}
+                  >
+                    Skip this step
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

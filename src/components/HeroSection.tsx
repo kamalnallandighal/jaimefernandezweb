@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { useWindowWidth } from '@/lib/useWindowWidth'
 
 const POSTER = 'https://images.unsplash.com/photo-1710793311332-a2c7d3c3ad3f?w=1920&q=80'
@@ -12,6 +13,7 @@ const STATS = [
 export default function HeroSection() {
   const width = useWindowWidth()
   const isMobile = width < 768
+  const navigate = useNavigate()
 
   const scrollTo = (id: string) =>
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
@@ -146,7 +148,7 @@ export default function HeroSection() {
               Free Home Valuation
             </button>
             <button
-              onClick={() => scrollTo('calendly')}
+              onClick={() => navigate('/start-your-search')}
               style={{
                 fontFamily: "'Source Sans 3', sans-serif",
                 fontSize: '12px',

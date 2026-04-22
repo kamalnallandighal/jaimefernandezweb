@@ -64,7 +64,7 @@ export default function HomeEvalPage() {
   const width = useWindowWidth()
   const isMobile = width < 768
 
-  const [form, setForm] = useState({ address: '', timeline: '', name: '', email: '', phone: '', notes: '' })
+  const [form, setForm] = useState({ address: '', timeline: '', name: '', email: '', phone: '', notes: '', loveNote: '' })
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -186,12 +186,27 @@ export default function HomeEvalPage() {
 
               {/* Notes */}
               <div>
-                <span style={label}>Anything else? (optional)</span>
+                <span style={label}>Anything else? <span style={{ color: '#bbb', fontWeight: 300, letterSpacing: 0 }}>(optional)</span></span>
                 <textarea
                   value={form.notes}
                   onChange={setInput('notes')}
                   rows={3}
                   placeholder="Recent renovations, unique features, or any questions..."
+                  style={{ ...underline, resize: 'vertical', paddingTop: '12px' }}
+                />
+              </div>
+
+              {/* Love note — optional, placed after contact capture */}
+              <div>
+                <span style={label}>Why do you love your home? <span style={{ color: '#bbb', fontWeight: 300, letterSpacing: 0 }}>(optional)</span></span>
+                <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '13px', fontWeight: 300, color: '#aaa', lineHeight: 1.6, margin: '0 0 12px' }}>
+                  Jaime loves knowing what makes a property special before writing the analysis.
+                </p>
+                <textarea
+                  value={form.loveNote}
+                  onChange={setInput('loveNote')}
+                  rows={3}
+                  placeholder="The backyard at sunset, the kitchen we renovated, walkable to everything..."
                   style={{ ...underline, resize: 'vertical', paddingTop: '12px' }}
                 />
               </div>
