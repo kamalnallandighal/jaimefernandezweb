@@ -136,13 +136,13 @@ Rules:
 - Eyebrow: gold rule + "SCOTTSDALE LUXURY REAL ESTATE" in gold tiny caps
 - Headline: "Jaime" / "Fernandez" two-line, Cormorant italic 300 weight, `clamp(76px, 10vw, 136px)` desktop
   - "Fernandez" has `marginLeft: clamp(52px, 8.5vw, 132px)` indent — REMOVED on mobile
-- CTAs: "Free Home Valuation" (gold, navy text) → scrolls to #home-eval; "Start Your Search" (outline) → #calendly
+- CTAs: "Free Home Valuation" (gold, navy text) → scrolls to #home-eval; "Start Your Search" (outline) → navigates to /start-your-search
 - Stat bar pinned bottom: 320+ / $2.1B / #1, gold numbers in Cormorant italic, gold vertical dividers (hidden on mobile)
 
 ### 2. About
 - Background: white #ffffff
 - Grid: `5fr 7fr` desktop → single column mobile
-- Photo placeholder: grey rectangle (#eceae5), not a circle avatar
+- Photo: `jaime.jpeg` served from `/public/assets/jaime.jpeg`, objectFit cover, objectPosition center top
 - Stats: 1fr 1fr grid, gold Cormorant italic numbers
 
 ### 3. Magic Zip / 85254 Advantage
@@ -151,18 +151,25 @@ Rules:
 - Decorative corner border div: hidden on mobile (position absolute, could overflow)
 - White card: `padding: 64px` desktop → `40px 32px` mobile
 
-### 4. Home Evaluation (Multi-Step Form)
+### 4 & 5. Home Evaluation + Connoisseur's Guide (side-by-side)
+- On desktop: `1fr 1fr` CSS grid in HomePage wraps both sections side-by-side
+- On mobile: stacks vertically (grid collapses to `1fr`)
+- Both GSAP scroll trigger IDs (`#home-eval`, `#restaurant`) remain on inner section elements
+
+#### Home Evaluation
 - Background: white #ffffff
 - Card shadow: `0 20px 60px rgba(0,35,73,0.10)`
+- **5-step flow:** Address → Property Type → Selling Timeline → Contact Info → "Why do you love your home?" (optional)
+- Step 5 has "Get My Valuation" submit + "Skip this step" link (loveNote is optional)
 - Step label/content/nav padding reduces on mobile (56px → 24px horizontal)
 
 ⚠️ CRITICAL: Address input MUST remain uncontrolled (no value= prop).
    AnimatePresence must NOT wrap step 1. Steps use display:block/none, never unmount step 1.
    Google Places uses PlaceAutocompleteElement (v=alpha, importLibrary). NOT the legacy Autocomplete class.
 
-### 5. Restaurant Guide
+#### Connoisseur's Guide (Restaurant)
 - Background: full-section photo with `rgba(0,35,73,0.90)` navy overlay — NOT flat navy
-- Section padding: `192px 48px` desktop → `96px 24px` mobile
+- Stretches to fill the grid row height matching HomeEvalSection
 - Form already uses `flexWrap: 'wrap'` so input + button stack naturally on mobile
 
 ### 6. Reviews
@@ -353,7 +360,24 @@ api/
     - Individual post: fluid header padding (`clamp`), related posts use `grid` PostCard variant
     - `Post` type updated: `featured: boolean` field added to `src/lib/supabase.ts`
   - Supabase SQL run: `ALTER TABLE posts ADD COLUMN featured boolean NOT NULL DEFAULT false;`
-- **Session 10 (current):**
+- **Session 11 (current):**
+  - StickyHeader: phone number font size increased 13→17px; RLSIR logo container fixed to `width: 184px, height: 41px` with `height: auto` on img tags
+  - Hero headline: swapped from Cormorant Garamond italic to **Tenor Sans uppercase** (`font-family: 'Tenor Sans'`, weight 400) — more presence, easier to read for elderly; `clamp(60px, 8vw, 108px)` desktop / `clamp(42px, 11vw, 64px)` mobile
+  - Hero CTA "Free Home Valuation" now navigates to `/home-eval` (was scrolling to #home-eval)
+  - MagicZipSection: replaced unverifiable 14%/22-day stats with 3 qualitative feature callout rows (GraduationCap/MapPin/Compass icons); added "Learn more about 85254 →" button linking to `/85254`
+  - New `/85254` subpage (`MagicZipPage.tsx`): navy hero + white story section + navy email form; noindex/nofollow
+  - `src/lib/validation.ts` (new): `isValidEmail` and `isValidPhone` shared utilities
+  - Email + phone format validation added across ALL 7 form locations:
+    - HomeEvalSection (homepage), HomeEvalPage, StartSearch, LetsStayInTouch page, LetsStayInTouchSection (homepage), RestaurantGuidePage, MagicZipPage
+    - Touch-based (error shows on blur); red `#e53e3e` on light bg, `#fc8181` on navy bg
+  - HomeEvalPage (`/home-eval`) rebuilt as 4-step wizard: Address → Timeline → Contact → Love Note
+    - Step 3 requires name + (valid email OR valid phone) + TCPA consent
+  - LetsStayInTouch page/section + RestaurantGuidePage: kept as name+email only (no phone)
+  - Blog: removed category filter nav (ALL | MARKET INSIGHTS | etc.) — single unified feed
+  - HomeEvalPage h1 "What Is Your Home Worth?" sized to `clamp(28px, 4vw, 52px)` with `whiteSpace: 'nowrap'` to fit one line
+  - Tenor Sans added to Google Fonts URL in `index.html`
+  - Multiple Vercel build errors fixed: removed unused `scrollTo`, `navGap`, `isMobile` vars; fixed temporal dead zone in StartSearch validation state declarations
+- **Session 10:**
   - 5 hidden lead-capture subpages added (noindex/nofollow, not in nav):
     - `/start-search` — buyer intake form: bedrooms, bathrooms, budget, areas, timeline, lender status, property type, name/email/phone
     - `/home-eval` — dedicated home valuation: address + timeline pills + name/email/phone + gold stats strip
@@ -398,7 +422,7 @@ api/
 
 ## Approved Design (Locked)
 
-HERO: `hero.mov` video, "Jaime / Fernandez" italic two-line left-aligned, two CTA buttons, stat bar bottom.
+HERO: `hero.mov` video, "Jaime / Fernandez" **Tenor Sans uppercase** two-line left-aligned, two CTA buttons, stat bar bottom. "Free Home Valuation" CTA navigates to `/home-eval`.
 
 COLOR SYSTEM: White (#ffffff) for light sections, Navy (#002349) for dark sections. Sand is gone.
 Gold (#C29B40) as accent only. Never deviate from these exact hex values.
