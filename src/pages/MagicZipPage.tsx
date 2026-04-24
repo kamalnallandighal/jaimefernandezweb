@@ -193,7 +193,7 @@ export default function MagicZipPage() {
               <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '16px', fontWeight: 300, color: 'rgba(255,255,255,0.60)', lineHeight: 1.75, marginBottom: '48px' }}>
                 Get off-market opportunities, neighborhood intel, and market updates — directly from Jaime.
               </p>
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '28px', textAlign: 'left' }}>
                 <div>
                   <span style={{ ...labelStyle, color: 'rgba(255,255,255,0.50)' }}>Your Name *</span>
                   <input
