@@ -149,7 +149,6 @@ export default function Blog() {
   const hPad = width < 768 ? '24px' : '48px'
   const isDesktop = width >= 1024
   const isTablet = width >= 768 && width < 1024
-  const isMobile = width < 768
 
   useEffect(() => {
     async function fetchPosts() {
