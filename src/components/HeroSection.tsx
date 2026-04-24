@@ -93,7 +93,7 @@ export default function HeroSection() {
             transition={{ duration: 1.0, delay: 0.38 }}
             style={{
               fontFamily: "'Tenor Sans', sans-serif",
-              fontSize: isMobile ? 'clamp(52px, 14vw, 80px)' : 'clamp(76px, 10vw, 136px)',
+              fontSize: isMobile ? 'clamp(42px, 11vw, 64px)' : 'clamp(60px, 8vw, 108px)',
               fontWeight: 400,
               textTransform: 'uppercase',
               lineHeight: 0.92,
