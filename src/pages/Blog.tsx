@@ -50,7 +50,7 @@ function EmptyState() {
 
 function ErrorState() {
   return (
-    <div style={{ padding: '160px 48px', textAlign: 'center' }}>
+    <div style={{ padding: '64px 48px', textAlign: 'center' }}>
       <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '15px', color: '#999' }}>
         Could not load posts. Please try again later.
       </p>
@@ -195,7 +195,7 @@ export default function Blog() {
       <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
 
         {/* Masthead */}
-        <div style={{ paddingTop: '96px', paddingBottom: '32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
+        <div style={{ paddingTop: '120px', paddingBottom: '32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
           <h1 style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
