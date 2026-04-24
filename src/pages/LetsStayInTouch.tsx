@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { isValidEmail, isValidPhone } from '@/lib/validation'
 import { Check } from 'lucide-react'
 import Footer from '@/components/Footer'
 import { JAIME } from '@/lib/constants'
@@ -30,6 +31,10 @@ export default function LetsStayInTouch() {
   const [form, setForm] = useState({ name: '', phone: '', email: '' })
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [phoneTouched, setPhoneTouched] = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
+  const phoneError = phoneTouched && form.phone !== '' && !isValidPhone(form.phone)
+  const emailError = emailTouched && form.email !== '' && !isValidEmail(form.email)
 
   const setInput = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [field]: e.target.value }))
@@ -107,26 +112,30 @@ export default function LetsStayInTouch() {
                   <input
                     required
                     type="tel"
-                    style={{ ...underline, color: '#ffffff', borderBottomColor: 'rgba(255,255,255,0.25)' }}
+                    style={{ ...underline, color: '#ffffff', borderBottomColor: phoneError ? '#fc8181' : 'rgba(255,255,255,0.25)' }}
                     value={form.phone}
                     onChange={setInput('phone')}
                     placeholder="(480) 000-0000"
+                    onBlur={() => setPhoneTouched(true)}
                   />
+                  {phoneError && <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', color: '#fc8181', display: 'block', marginTop: '6px' }}>Please enter a valid phone number.</span>}
                 </div>
                 <div>
                   <span style={{ ...label, color: 'rgba(255,255,255,0.50)' }}>Email (optional)</span>
                   <input
                     type="email"
-                    style={{ ...underline, color: '#ffffff', borderBottomColor: 'rgba(255,255,255,0.25)' }}
+                    style={{ ...underline, color: '#ffffff', borderBottomColor: emailError ? '#fc8181' : 'rgba(255,255,255,0.25)' }}
                     value={form.email}
                     onChange={setInput('email')}
                     placeholder="jane@example.com"
+                    onBlur={() => setEmailTouched(true)}
                   />
+                  {emailError && <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', color: '#fc8181', display: 'block', marginTop: '6px' }}>Please enter a valid email address.</span>}
                 </div>
 
                 <button
                   type="submit"
-                  disabled={loading || !form.name || !form.phone}
+                  disabled={loading || !form.name || !form.phone || phoneError || emailError}
                   style={{
                     fontFamily: "'Source Sans 3', sans-serif",
                     fontSize: '11px', fontWeight: 700,

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { isValidEmail } from '@/lib/validation'
 import { Check, UtensilsCrossed, MapPin, Star } from 'lucide-react'
 import Footer from '@/components/Footer'
 import { useWindowWidth } from '@/lib/useWindowWidth'
@@ -36,6 +37,8 @@ export default function RestaurantGuidePage() {
   const [form, setForm] = useState({ name: '', email: '' })
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
+  const emailError = emailTouched && form.email !== '' && !isValidEmail(form.email)
 
   const setInput = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [field]: e.target.value }))
@@ -131,11 +134,19 @@ export default function RestaurantGuidePage() {
                 </div>
                 <div>
                   <span style={label}>Email Address *</span>
-                  <input required type="email" style={underline} value={form.email} onChange={setInput('email')} placeholder="jane@example.com" />
+                  <input
+                    required type="email"
+                    style={{ ...underline, borderBottomColor: emailError ? '#e53e3e' : 'rgba(0,35,73,0.25)' }}
+                    value={form.email}
+                    onChange={setInput('email')}
+                    onBlur={() => setEmailTouched(true)}
+                    placeholder="jane@example.com"
+                  />
+                  {emailError && <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', color: '#e53e3e', display: 'block', marginTop: '6px' }}>Please enter a valid email address.</span>}
                 </div>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || emailError}
                   style={{
                     fontFamily: "'Source Sans 3', sans-serif",
                     fontSize: '11px', fontWeight: 700,

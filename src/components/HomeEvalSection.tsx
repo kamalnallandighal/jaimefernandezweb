@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Home, Building2, Building, Gem, Lock, Check, ChevronRight, ChevronLeft } from 'lucide-react'
 import { useWindowWidth } from '@/lib/useWindowWidth'
+import { isValidEmail, isValidPhone } from '@/lib/validation'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -260,6 +261,10 @@ export default function HomeEvalSection() {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [tcpa,  setTcpa]  = useState(false)
+  const [phoneTouched, setPhoneTouched] = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
+  const phoneError = phoneTouched && phone !== '' && !isValidPhone(phone)
+  const emailError = emailTouched && email !== '' && !isValidEmail(email)
 
   // Step 5 — optional love note
   const [loveNote, setLoveNote] = useState('')
@@ -272,7 +277,8 @@ export default function HomeEvalSection() {
     step === 1 ? addressValid :
     step === 2 ? propertyType !== null :
     step === 3 ? timeline !== '' :
-    step === 4 ? name.trim() !== '' && (phone.trim() !== '' || email.trim() !== '') && tcpa :
+    step === 4 ? name.trim() !== '' && !phoneError && !emailError &&
+      ((phone.trim() !== '' && isValidPhone(phone)) || (email.trim() !== '' && isValidEmail(email))) && tcpa :
     true // step 5 is optional
 
   const goTo = (next: Step, dir: number) => {
@@ -492,23 +498,38 @@ export default function HomeEvalSection() {
                   Where should we send<br />your valuation?
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginBottom: '36px' }}>
-                  {([
-                    { id: 'eval-name',  type: 'text',  label: 'Full Name',      placeholder: 'Jane Smith',           value: name,  set: setName  },
-                    { id: 'eval-phone', type: 'tel',   label: 'Phone Number',   placeholder: '(480) 555-0100',       value: phone, set: setPhone },
-                    { id: 'eval-email', type: 'email', label: 'Email Address',  placeholder: 'jane@example.com',     value: email, set: setEmail },
-                  ] as const).map(({ id, type, label, placeholder, value, set }) => (
-                    <div key={id}>
-                      <label style={labelStyle} htmlFor={id}>{label}</label>
-                      <input
-                        id={id} type={type} placeholder={placeholder}
-                        value={value}
-                        onChange={e => set(e.target.value)}
-                        style={underlineInput}
-                        onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
-                        onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
-                      />
-                    </div>
-                  ))}
+                  <div>
+                    <label style={labelStyle} htmlFor="eval-name">Full Name</label>
+                    <input
+                      id="eval-name" type="text" placeholder="Jane Smith"
+                      value={name} onChange={e => setName(e.target.value)}
+                      style={underlineInput}
+                      onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
+                      onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle} htmlFor="eval-phone">Phone Number</label>
+                    <input
+                      id="eval-phone" type="tel" placeholder="(480) 555-0100"
+                      value={phone} onChange={e => setPhone(e.target.value)}
+                      style={{ ...underlineInput, borderBottomColor: phoneError ? '#e53e3e' : 'rgba(0,35,73,0.25)' }}
+                      onFocus={e => (e.currentTarget.style.borderBottomColor = phoneError ? '#e53e3e' : '#002349')}
+                      onBlur={e  => { setPhoneTouched(true); e.currentTarget.style.borderBottomColor = phoneError ? '#e53e3e' : 'rgba(0,35,73,0.25)' }}
+                    />
+                    {phoneError && <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', color: '#e53e3e', display: 'block', marginTop: '6px' }}>Please enter a valid phone number.</span>}
+                  </div>
+                  <div>
+                    <label style={labelStyle} htmlFor="eval-email">Email Address</label>
+                    <input
+                      id="eval-email" type="email" placeholder="jane@example.com"
+                      value={email} onChange={e => setEmail(e.target.value)}
+                      style={{ ...underlineInput, borderBottomColor: emailError ? '#e53e3e' : 'rgba(0,35,73,0.25)' }}
+                      onFocus={e => (e.currentTarget.style.borderBottomColor = emailError ? '#e53e3e' : '#002349')}
+                      onBlur={e  => { setEmailTouched(true); e.currentTarget.style.borderBottomColor = emailError ? '#e53e3e' : 'rgba(0,35,73,0.25)' }}
+                    />
+                    {emailError && <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', color: '#e53e3e', display: 'block', marginTop: '6px' }}>Please enter a valid email address.</span>}
+                  </div>
                 </div>
 
                 {/* TCPA */}

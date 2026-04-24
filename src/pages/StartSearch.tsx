@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Home, Building2, Building, Gem, Check, ChevronRight, ChevronLeft } from 'lucide-react'
+import { isValidEmail, isValidPhone } from '@/lib/validation'
 import Footer from '@/components/Footer'
 import { JAIME } from '@/lib/constants'
 import { useWindowWidth } from '@/lib/useWindowWidth'
@@ -79,6 +80,10 @@ export default function StartSearch() {
   const [direction, setDirection] = useState(1)
   const [submitted, setSubmitted] = useState(false)
   const [loading,   setLoading]   = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
+  const [phoneTouched, setPhoneTouched] = useState(false)
+  const emailError = emailTouched && email !== '' && !isValidEmail(email)
+  const phoneError = phoneTouched && phone !== '' && !isValidPhone(phone)
 
   const [propertyType, setPropertyType] = useState<PropertyType | ''>('')
   const [bedrooms,     setBedrooms]     = useState('')
@@ -97,7 +102,8 @@ export default function StartSearch() {
     step === 1 ? bedrooms !== '' && bathrooms !== '' :
     step === 2 ? budget !== '' :
     step === 3 ? timeline !== '' && lender !== '' :
-    name.trim() !== '' && (email.trim() !== '' || phone.trim() !== '')
+    name.trim() !== '' && !emailError && !phoneError &&
+    ((email.trim() !== '' && isValidEmail(email)) || (phone.trim() !== '' && isValidPhone(phone)))
 
   const goTo = (next: SearchStep, dir: number) => {
     setDirection(dir)
@@ -390,25 +396,27 @@ export default function StartSearch() {
                               <span style={labelStyle}>Email</span>
                               <input
                                 type="email"
-                                style={underline}
+                                style={{ ...underline, borderBottomColor: emailError ? '#e53e3e' : 'rgba(0,35,73,0.25)' }}
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                                 placeholder="jane@example.com"
-                                onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
-                                onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
+                                onFocus={e => (e.currentTarget.style.borderBottomColor = emailError ? '#e53e3e' : '#002349')}
+                                onBlur={e  => { setEmailTouched(true); e.currentTarget.style.borderBottomColor = emailError ? '#e53e3e' : 'rgba(0,35,73,0.25)' }}
                               />
+                              {emailError && <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', color: '#e53e3e', display: 'block', marginTop: '6px' }}>Please enter a valid email address.</span>}
                             </div>
                             <div>
                               <span style={labelStyle}>Phone</span>
                               <input
                                 type="tel"
-                                style={underline}
+                                style={{ ...underline, borderBottomColor: phoneError ? '#e53e3e' : 'rgba(0,35,73,0.25)' }}
                                 value={phone}
                                 onChange={e => setPhone(e.target.value)}
                                 placeholder="(480) 000-0000"
-                                onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
-                                onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
+                                onFocus={e => (e.currentTarget.style.borderBottomColor = phoneError ? '#e53e3e' : '#002349')}
+                                onBlur={e  => { setPhoneTouched(true); e.currentTarget.style.borderBottomColor = phoneError ? '#e53e3e' : 'rgba(0,35,73,0.25)' }}
                               />
+                              {phoneError && <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', color: '#e53e3e', display: 'block', marginTop: '6px' }}>Please enter a valid phone number.</span>}
                             </div>
                             <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
                               <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 300, color: '#bbb', margin: 0, lineHeight: 1.6 }}>

@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { GraduationCap, MapPin, Compass, Check } from 'lucide-react'
 import Footer from '@/components/Footer'
+import { isValidEmail } from '@/lib/validation'
 import { useWindowWidth } from '@/lib/useWindowWidth'
 
 const SHEET_URL = import.meta.env.VITE_SHEET_BEST_URL as string | undefined
@@ -49,8 +50,10 @@ export default function MagicZipPage() {
   const [email,     setEmail]     = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading,   setLoading]   = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
+  const emailError = emailTouched && email !== '' && !isValidEmail(email)
 
-  const canSubmit = name.trim() !== '' && email.trim() !== ''
+  const canSubmit = name.trim() !== '' && email.trim() !== '' && isValidEmail(email)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -211,13 +214,14 @@ export default function MagicZipPage() {
                   <input
                     required
                     type="email"
-                    style={{ ...underline, color: '#ffffff', borderBottomColor: 'rgba(255,255,255,0.25)' }}
+                    style={{ ...underline, color: '#ffffff', borderBottomColor: emailError ? '#fc8181' : 'rgba(255,255,255,0.25)' }}
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="jane@example.com"
-                    onFocus={e => (e.currentTarget.style.borderBottomColor = 'rgba(255,255,255,0.70)')}
-                    onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(255,255,255,0.25)')}
+                    onFocus={e => (e.currentTarget.style.borderBottomColor = emailError ? '#fc8181' : 'rgba(255,255,255,0.70)')}
+                    onBlur={e => { setEmailTouched(true); e.currentTarget.style.borderBottomColor = emailError ? '#fc8181' : 'rgba(255,255,255,0.25)' }}
                   />
+                  {emailError && <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', color: '#fc8181', display: 'block', marginTop: '6px' }}>Please enter a valid email address.</span>}
                 </div>
                 <button
                   type="submit"

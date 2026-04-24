@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useWindowWidth } from '@/lib/useWindowWidth'
+import { isValidEmail } from '@/lib/validation'
 
 const SHEET_URL = import.meta.env.VITE_SHEET_BEST_URL as string | undefined
 
@@ -10,6 +11,8 @@ export default function LetsStayInTouchSection() {
   const [form, setForm] = useState({ name: '', email: '' })
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
+  const emailError = emailTouched && form.email !== '' && !isValidEmail(form.email)
 
   const setInput = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [field]: e.target.value }))
@@ -78,7 +81,7 @@ export default function LetsStayInTouchSection() {
                   fontFamily: "'Source Sans 3', sans-serif",
                   fontSize: '15px', fontWeight: 300,
                   color: '#002349', backgroundColor: 'transparent',
-                  border: 'none', borderBottom: '1px solid rgba(0,35,73,0.25)',
+                  border: 'none', borderBottom: `1px solid ${emailError ? '#e53e3e' : 'rgba(0,35,73,0.25)'}`,
                   outline: 'none', padding: '12px 0',
                   flex: isMobile ? '1 1 auto' : '0 1 240px',
                   minWidth: isMobile ? '100%' : '200px',
@@ -86,10 +89,11 @@ export default function LetsStayInTouchSection() {
                 placeholder="Email Address"
                 value={form.email}
                 onChange={setInput('email')}
+                onBlur={() => setEmailTouched(true)}
               />
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || emailError}
                 style={{
                   fontFamily: "'Source Sans 3', sans-serif",
                   fontSize: '11px', fontWeight: 700,
@@ -109,7 +113,12 @@ export default function LetsStayInTouchSection() {
               </button>
             </form>
 
-            <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 300, color: '#bbb', marginTop: '20px' }}>
+            {emailError && (
+              <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 400, color: '#e53e3e', marginTop: '8px' }}>
+                Please enter a valid email address.
+              </p>
+            )}
+            <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 300, color: '#bbb', marginTop: '12px' }}>
               No spam. Unsubscribe anytime.
             </p>
           </>
