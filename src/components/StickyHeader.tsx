@@ -55,7 +55,7 @@ export default function StickyHeader() {
         <NavLink
           to="/"
           className="no-underline"
-          style={{ position: 'relative', height: '41px', display: 'block', justifySelf: 'start' }}
+          style={{ position: 'relative', width: '184px', height: '41px', display: 'block', justifySelf: 'start' }}
         >
           <img
             src="/assets/logos/RLSIR_Horz_white.png"

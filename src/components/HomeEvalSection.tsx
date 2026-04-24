@@ -272,7 +272,7 @@ export default function HomeEvalSection() {
     step === 1 ? addressValid :
     step === 2 ? propertyType !== null :
     step === 3 ? timeline !== '' :
-    step === 4 ? name.trim() !== '' && phone.trim() !== '' && email.trim() !== '' && tcpa :
+    step === 4 ? name.trim() !== '' && (phone.trim() !== '' || email.trim() !== '') && tcpa :
     true // step 5 is optional
 
   const goTo = (next: Step, dir: number) => {
