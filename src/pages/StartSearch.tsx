@@ -82,8 +82,6 @@ export default function StartSearch() {
   const [loading,   setLoading]   = useState(false)
   const [emailTouched, setEmailTouched] = useState(false)
   const [phoneTouched, setPhoneTouched] = useState(false)
-  const emailError = emailTouched && email !== '' && !isValidEmail(email)
-  const phoneError = phoneTouched && phone !== '' && !isValidPhone(phone)
 
   const [propertyType, setPropertyType] = useState<PropertyType | ''>('')
   const [bedrooms,     setBedrooms]     = useState('')
@@ -95,6 +93,9 @@ export default function StartSearch() {
   const [name,         setName]         = useState('')
   const [email,        setEmail]        = useState('')
   const [phone,        setPhone]        = useState('')
+
+  const emailError = emailTouched && email !== '' && !isValidEmail(email)
+  const phoneError = phoneTouched && phone !== '' && !isValidPhone(phone)
   const [notes,        setNotes]        = useState('')
 
   // Step is valid when at least one key field is set

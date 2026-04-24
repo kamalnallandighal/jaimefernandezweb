@@ -181,8 +181,7 @@ export default function Blog() {
   const featuredSmall = rest.slice(0, 4)
   const secondaryFeed = rest.slice(4, 7)
 
-  // Category nav gap
-  const navGap = isMobile ? '0 16px' : '0 40px'
+
 
   return (
     <>

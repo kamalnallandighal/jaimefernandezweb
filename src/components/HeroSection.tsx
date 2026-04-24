@@ -15,8 +15,6 @@ export default function HeroSection() {
   const isMobile = width < 768
   const navigate = useNavigate()
 
-  const scrollTo = (id: string) =>
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
   return (
     <section
