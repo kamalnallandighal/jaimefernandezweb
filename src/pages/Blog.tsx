@@ -195,10 +195,10 @@ export default function Blog() {
       <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
 
         {/* Masthead */}
-        <div style={{ paddingTop: '128px', paddingBottom: '64px', textAlign: 'center', backgroundColor: '#ffffff' }}>
+        <div style={{ paddingTop: '96px', paddingBottom: '32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
           <h1 style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
-            fontSize: 'clamp(4rem, 10vw, 8rem)',
+            fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
             fontStyle: 'italic',
             fontWeight: 300,
             color: '#002349',
@@ -208,7 +208,7 @@ export default function Blog() {
           }}>
             The Narrative
           </h1>
-          <div style={{ width: '64px', height: '1px', backgroundColor: '#C29B40', margin: '24px auto 0' }} />
+          <div style={{ width: '64px', height: '1px', backgroundColor: '#C29B40', margin: '20px auto 0' }} />
         </div>
 
         {/* States */}
@@ -217,7 +217,7 @@ export default function Blog() {
         {!loading && !error && posts.length === 0 && <EmptyState />}
 
         {!loading && !error && posts.length > 0 && (
-          <div style={{ maxWidth: '1280px', margin: '0 auto', padding: `80px ${hPad} 0` }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', padding: `40px ${hPad} 0` }}>
 
             <>
               {/* Asymmetric Featured Grid */}

@@ -70,7 +70,7 @@ export default function PostCard({ post, size, className = '' }: PostCardProps) 
   if (size === 'large') {
     return (
       <Link to={`/blog/${post.slug}`} className={`block cursor-pointer group ${className}`} style={{ textDecoration: 'none' }}>
-        <ImageBox url={post.cover_image_url} alt={post.title} aspectClass="aspect-[4/5]" />
+        <ImageBox url={post.cover_image_url} alt={post.title} aspectClass="aspect-[3/4]" />
         <div style={{ paddingTop: '32px' }}>
           <CategoryTag category={post.category} />
           <h2
@@ -122,7 +122,7 @@ export default function PostCard({ post, size, className = '' }: PostCardProps) 
             className="group-hover:text-[#C29B40] transition-colors duration-300"
             style={{
               fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontSize: '1.25rem',
+              fontSize: '1.4rem',
               fontWeight: 300,
               fontStyle: 'italic',
               lineHeight: 1.3,
