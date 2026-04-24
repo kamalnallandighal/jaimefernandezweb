@@ -195,7 +195,7 @@ export default function Blog() {
       <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
 
         {/* Masthead */}
-        <div style={{ paddingTop: '120px', paddingBottom: '32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
+        <div style={{ paddingTop: '136px', paddingBottom: '32px', textAlign: 'center', backgroundColor: '#ffffff' }}>
           <h1 style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
