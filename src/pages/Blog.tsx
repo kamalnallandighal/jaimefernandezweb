@@ -5,7 +5,6 @@ import PostCard from '@/components/PostCard'
 import Footer from '@/components/Footer'
 import { useWindowWidth } from '@/lib/useWindowWidth'
 
-const CATEGORIES = ['ALL', 'Market Insights', 'Neighborhoods', 'Buyer Guides', 'Seller Guides', '85254']
 
 // ─── Loading skeleton ────────────────────────────────────────────────────────
 
@@ -145,7 +144,6 @@ export default function Blog() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [activeCategory, setActiveCategory] = useState('ALL')
   const width = useWindowWidth()
 
   const hPad = width < 768 ? '24px' : '48px'
@@ -173,24 +171,15 @@ export default function Blog() {
     fetchPosts()
   }, [])
 
-  const filtered = activeCategory === 'ALL'
-    ? posts
-    : posts.filter(p => p.category === activeCategory)
-
-  // Find featured post: first post with featured === true, fallback to filtered[0]
-  const featuredIndex = filtered.findIndex(p => p.featured === true)
-  const featuredLarge: Post | undefined = featuredIndex !== -1 ? filtered[featuredIndex] : filtered[0]
+  // Find featured post: first post with featured === true, fallback to posts[0]
+  const featuredIndex = posts.findIndex(p => p.featured === true)
+  const featuredLarge: Post | undefined = featuredIndex !== -1 ? posts[featuredIndex] : posts[0]
   const rest: Post[] = featuredLarge
-    ? filtered.filter((_, i) => i !== (featuredIndex !== -1 ? featuredIndex : 0))
+    ? posts.filter((_, i) => i !== (featuredIndex !== -1 ? featuredIndex : 0))
     : []
 
   const featuredSmall = rest.slice(0, 4)
   const secondaryFeed = rest.slice(4, 7)
-
-  // Category filter grid columns
-  let categoryGridCols = 'repeat(3, 1fr)'
-  if (isTablet) categoryGridCols = 'repeat(2, 1fr)'
-  if (isMobile) categoryGridCols = '1fr'
 
   // Category nav gap
   const navGap = isMobile ? '0 16px' : '0 40px'
@@ -224,56 +213,16 @@ export default function Blog() {
           <div style={{ width: '64px', height: '1px', backgroundColor: '#C29B40', margin: '24px auto 0' }} />
         </div>
 
-        {/* Category Nav */}
-        <nav
-          style={{
-            position: 'sticky',
-            top: '80px',
-            zIndex: 40,
-            backgroundColor: '#ffffff',
-            borderBottom: '1px solid rgba(0,0,0,0.06)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: navGap, padding: '20px 24px', overflowX: 'auto' }}>
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                style={{
-                  fontFamily: "'Source Sans 3', sans-serif",
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  letterSpacing: '0.20em',
-                  textTransform: 'uppercase',
-                  color: activeCategory === cat ? '#C29B40' : 'rgba(0,35,73,0.50)',
-                  paddingBottom: '6px',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: activeCategory === cat ? '1.5px solid #C29B40' : '1.5px solid transparent',
-                  cursor: 'pointer',
-                  transition: 'color 0.2s',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={e => { if (activeCategory !== cat) e.currentTarget.style.color = '#002349' }}
-                onMouseLeave={e => { if (activeCategory !== cat) e.currentTarget.style.color = 'rgba(0,35,73,0.50)' }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </nav>
-
         {/* States */}
         {loading && <ShimmerGrid />}
         {!loading && error && <ErrorState />}
-        {!loading && !error && filtered.length === 0 && <EmptyState />}
+        {!loading && !error && posts.length === 0 && <EmptyState />}
 
-        {!loading && !error && filtered.length > 0 && (
+        {!loading && !error && posts.length > 0 && (
           <div style={{ maxWidth: '1280px', margin: '0 auto', padding: `80px ${hPad} 0` }}>
 
-            {activeCategory === 'ALL' ? (
-              <>
-                {/* Asymmetric Featured Grid — ALL view */}
+            <>
+              {/* Asymmetric Featured Grid */}
                 <section style={{
                   display: 'grid',
                   gridTemplateColumns: isDesktop && featuredSmall.length > 0 ? '55% 1fr' : '1fr',
@@ -306,17 +255,7 @@ export default function Blog() {
                     </div>
                   </section>
                 )}
-              </>
-            ) : (
-              /* Category-filtered uniform grid */
-              <section style={{ marginBottom: '96px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: categoryGridCols, gap: '40px' }}>
-                  {filtered.map(post => (
-                    <PostCard key={post.id} post={post} size="grid" />
-                  ))}
-                </div>
-              </section>
-            )}
+            </>
 
           </div>
         )}
