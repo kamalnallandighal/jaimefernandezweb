@@ -97,7 +97,7 @@ export default function StartSearch() {
     step === 1 ? bedrooms !== '' && bathrooms !== '' :
     step === 2 ? budget !== '' :
     step === 3 ? timeline !== '' && lender !== '' :
-    name.trim() !== '' && email.trim() !== ''
+    name.trim() !== '' && (email.trim() !== '' || phone.trim() !== '')
 
   const goTo = (next: SearchStep, dir: number) => {
     setDirection(dir)
@@ -387,9 +387,9 @@ export default function StartSearch() {
                               />
                             </div>
                             <div>
-                              <span style={labelStyle}>Email *</span>
+                              <span style={labelStyle}>Email</span>
                               <input
-                                required type="email"
+                                type="email"
                                 style={underline}
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
@@ -409,6 +409,11 @@ export default function StartSearch() {
                                 onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
                                 onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
                               />
+                            </div>
+                            <div style={{ gridColumn: isMobile ? 'auto' : 'span 2' }}>
+                              <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 300, color: '#bbb', margin: 0, lineHeight: 1.6 }}>
+                                * We'll need at least one way to reach you — email or phone.
+                              </p>
                             </div>
                           </div>
                           <div>

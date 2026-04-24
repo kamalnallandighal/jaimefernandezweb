@@ -55,17 +55,17 @@ export default function StickyHeader() {
         <NavLink
           to="/"
           className="no-underline"
-          style={{ position: 'relative', width: '170px', height: '38px', display: 'block', justifySelf: 'start' }}
+          style={{ position: 'relative', height: '41px', display: 'block', justifySelf: 'start' }}
         >
           <img
             src="/assets/logos/RLSIR_Horz_white.png"
             alt="Russ Lyon Sotheby's International Realty"
-            style={{ position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)', width: '170px', height: 'auto', opacity: isWhite ? 0 : 1, transition: 'opacity 0.5s ease' }}
+            style={{ position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)', height: '41px', width: 'auto', opacity: isWhite ? 0 : 1, transition: 'opacity 0.5s ease' }}
           />
           <img
             src="/assets/logos/RLSIR_Horz_blue.png"
             alt="Russ Lyon Sotheby's International Realty"
-            style={{ position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)', width: '170px', height: 'auto', opacity: isWhite ? 1 : 0, transition: 'opacity 0.5s ease' }}
+            style={{ position: 'absolute', top: '50%', left: 0, transform: 'translateY(-50%)', height: '41px', width: 'auto', opacity: isWhite ? 1 : 0, transition: 'opacity 0.5s ease' }}
           />
         </NavLink>
 
@@ -129,7 +129,7 @@ export default function StickyHeader() {
             href={`tel:${JAIME.phone.replace(/\./g, '')}`}
             style={{
               fontFamily: "'Source Sans 3', sans-serif",
-              fontSize: '13px',
+              fontSize: '17px',
               fontWeight: 700,
               letterSpacing: '0.12em',
               color: isWhite ? '#002349' : '#ffffff',

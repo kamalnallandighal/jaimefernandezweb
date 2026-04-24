@@ -1,8 +1,11 @@
+import { GraduationCap, MapPin, Compass } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useWindowWidth } from '@/lib/useWindowWidth'
 
 export default function MagicZipSection() {
   const width = useWindowWidth()
   const isMobile = width < 768
+  const navigate = useNavigate()
 
   return (
     <section id="magic-zip" style={{ backgroundColor: '#002349', padding: isMobile ? '80px 24px' : '128px 48px', overflow: 'hidden', position: 'relative' }}>
@@ -44,14 +47,53 @@ export default function MagicZipSection() {
             <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '16px', fontWeight: 300, color: '#43474e', lineHeight: 1.75, margin: 0, marginBottom: '48px' }}>
               Expansive lots, mature desert landscaping, and top-rated schools - minutes from Old Town, Kierland, and the valley's finest dining. Jaime has closed more transactions in this corridor than any other agent.
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-              {[{ value: '14%', label: 'Annual Apprec.' }, { value: '22 Days', label: 'Avg Market Time' }].map(stat => (
-                <div key={stat.value}>
-                  <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 'clamp(28px, 4vw, 36px)', fontStyle: 'italic', color: '#C29B40', lineHeight: 1 }}>{stat.value}</div>
-                  <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', color: '#002349', marginTop: '8px' }}>{stat.label}</div>
+            {/* Feature callouts */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {[
+                { icon: GraduationCap, label: 'A-Rated Schools', desc: 'Scottsdale Unified — top 5 school district in Arizona.' },
+                { icon: MapPin, label: 'Best of Both Cities', desc: 'Scottsdale address. Phoenix city tax rate.' },
+                { icon: Compass, label: 'Prime Location', desc: 'Minutes to Kierland, Old Town & DC Ranch.' },
+              ].map(({ icon: Icon, label, desc }, i) => (
+                <div
+                  key={label}
+                  style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '16px',
+                    padding: '20px 0',
+                    borderTop: i === 0 ? '1px solid rgba(0,35,73,0.08)' : 'none',
+                    borderBottom: '1px solid rgba(0,35,73,0.08)',
+                  }}
+                >
+                  <div style={{ flexShrink: 0, marginTop: '2px' }}>
+                    <Icon size={18} color="#C29B40" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.20em', textTransform: 'uppercase', color: '#002349', marginBottom: '4px' }}>
+                      {label}
+                    </div>
+                    <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '13px', fontWeight: 300, color: '#666', lineHeight: 1.6 }}>
+                      {desc}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {/* Link to /85254 */}
+            <button
+              onClick={() => navigate('/85254')}
+              style={{
+                fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 700,
+                letterSpacing: '0.20em', textTransform: 'uppercase',
+                color: '#C29B40', background: 'none', border: 'none',
+                padding: '16px 0 0', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '8px',
+                transition: 'opacity 0.2s ease',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+            >
+              Learn more about 85254 →
+            </button>
           </div>
           {/* Decorative corner border — hidden on mobile */}
           {!isMobile && (

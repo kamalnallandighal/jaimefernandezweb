@@ -92,11 +92,11 @@ export default function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.0, delay: 0.38 }}
             style={{
-              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontFamily: "'Tenor Sans', sans-serif",
               fontSize: isMobile ? 'clamp(52px, 14vw, 80px)' : 'clamp(76px, 10vw, 136px)',
-              fontWeight: 300,
-              fontStyle: 'italic',
-              lineHeight: 0.88,
+              fontWeight: 400,
+              textTransform: 'uppercase',
+              lineHeight: 0.92,
               color: '#ffffff',
               margin: 0,
               marginBottom: '44px',
@@ -127,7 +127,7 @@ export default function HeroSection() {
             }}
           >
             <button
-              onClick={() => scrollTo('home-eval')}
+              onClick={() => navigate('/home-eval')}
               style={{
                 fontFamily: "'Source Sans 3', sans-serif",
                 fontSize: '12px',

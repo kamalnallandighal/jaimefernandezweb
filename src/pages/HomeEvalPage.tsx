@@ -1,17 +1,26 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Check } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Check, ChevronRight, ChevronLeft } from 'lucide-react'
 import Footer from '@/components/Footer'
 import { JAIME } from '@/lib/constants'
 import { useWindowWidth } from '@/lib/useWindowWidth'
 
 const SHEET_URL = import.meta.env.VITE_SHEET_BEST_URL as string | undefined
 
-const label: React.CSSProperties = {
+const TIMELINES = [
+  'Ready to sell now',
+  '1–3 months',
+  '3–6 months',
+  '6–12 months',
+  'Just curious about value',
+]
+
+const labelStyle: React.CSSProperties = {
   fontFamily: "'Source Sans 3', sans-serif",
   fontSize: '10px', fontWeight: 700,
   letterSpacing: '0.22em', textTransform: 'uppercase',
-  color: '#999', display: 'block', marginBottom: '8px',
+  color: '#999', display: 'block', marginBottom: '14px',
 }
 
 const underline: React.CSSProperties = {
@@ -23,68 +32,74 @@ const underline: React.CSSProperties = {
   width: '100%', padding: '12px 0',
 }
 
-const TIMELINES = [
-  'Ready to sell now',
-  '1–3 months',
-  '3–6 months',
-  '6–12 months',
-  'Just curious about value',
-]
+type EvalStep = 1 | 2 | 3 | 4
 
-function PillGroup({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-      {options.map(opt => {
-        const selected = value === opt
-        return (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => onChange(opt)}
-            style={{
-              fontFamily: "'Source Sans 3', sans-serif",
-              fontSize: '12px', fontWeight: selected ? 600 : 400,
-              padding: '10px 20px',
-              border: `1px solid ${selected ? '#C29B40' : 'rgba(0,35,73,0.18)'}`,
-              backgroundColor: selected ? '#C29B40' : 'transparent',
-              color: selected ? '#ffffff' : '#002349',
-              cursor: 'pointer',
-              transition: 'all 0.18s ease',
-            }}
-          >
-            {opt}
-          </button>
-        )
-      })}
-    </div>
-  )
+const variants = {
+  enter: (dir: number) => ({ opacity: 0, x: dir > 0 ? 32 : -32 }),
+  center: { opacity: 1, x: 0 },
+  exit:  (dir: number) => ({ opacity: 0, x: dir > 0 ? -32 : 32 }),
 }
 
 export default function HomeEvalPage() {
   const width = useWindowWidth()
   const isMobile = width < 768
 
-  const [form, setForm] = useState({ address: '', timeline: '', name: '', email: '', phone: '', notes: '', loveNote: '' })
+  const [step,      setStep]      = useState<EvalStep>(1)
+  const [direction, setDirection] = useState(1)
   const [submitted, setSubmitted] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading,   setLoading]   = useState(false)
 
-  const setInput = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm(f => ({ ...f, [field]: e.target.value }))
+  const [address,  setAddress]  = useState('')
+  const [timeline, setTimeline] = useState('')
+  const [name,     setName]     = useState('')
+  const [email,    setEmail]    = useState('')
+  const [phone,    setPhone]    = useState('')
+  const [loveNote, setLoveNote] = useState('')
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  const canProceed =
+    step === 1 ? address.trim() !== '' :
+    step === 2 ? true :
+    step === 3 ? name.trim() !== '' && (email.trim() !== '' || phone.trim() !== '') :
+    true
+
+  const goTo = (next: EvalStep, dir: number) => {
+    setDirection(dir)
+    setStep(next)
+  }
+
+  async function handleSubmit() {
     setLoading(true)
     try {
       if (SHEET_URL) {
         await fetch(SHEET_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...form, source: 'Home Evaluation', date: new Date().toISOString() }),
+          body: JSON.stringify({
+            source: 'Home Evaluation',
+            Address: address, Timeline: timeline,
+            Name: name, Email: email, Phone: phone,
+            'Love Note': loveNote,
+            Date: new Date().toISOString(),
+          }),
         })
       }
     } catch (_) { /* fail silently */ }
     setLoading(false)
     setSubmitted(true)
+  }
+
+  const stepTitles: Record<EvalStep, string> = {
+    1: 'Your property',
+    2: 'Your timeline',
+    3: 'Your contact',
+    4: 'One last thing',
+  }
+
+  const stepHeadings: Record<EvalStep, React.ReactNode> = {
+    1: <>What's the address<br />of your property?</>,
+    2: <>When are you thinking<br />about selling?</>,
+    3: <>Where should Jaime<br />send your analysis?</>,
+    4: <>Why do you love<br />your home?</>,
   }
 
   return (
@@ -104,138 +119,280 @@ export default function HomeEvalPage() {
             What Is Your Home Worth?
           </h1>
           <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '17px', fontWeight: 300, color: 'rgba(255,255,255,0.65)', lineHeight: 1.75, margin: 0 }}>
-            Get an accurate picture of your home's value with zero obligation, with a free comprehensive market analysis.
+            Get an accurate picture of your home's value — free, no obligation, personally handled by Jaime.
           </p>
         </div>
       </section>
 
-      {/* Stats strip */}
-      <div style={{ backgroundColor: '#C29B40', padding: '24px 48px' }}>
-        <div style={{ maxWidth: '780px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '40px' }}>
-          {[
-            ['320+', 'Transactions Closed'],
-            ['$2.1B', 'Total Sales Volume'],
-            ['24 hrs', 'Average Response Time'],
-          ].map(([num, text]) => (
-            <div key={text} style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '28px', fontStyle: 'italic', fontWeight: 300, color: '#ffffff' }}>{num}</div>
-              <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '10px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.80)', marginTop: '4px' }}>{text}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Form */}
+      {/* Wizard */}
       <section style={{ backgroundColor: '#ffffff', padding: isMobile ? '64px 24px 80px' : '96px 48px 128px' }}>
         <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+
           {submitted ? (
-            <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              style={{ textAlign: 'center', padding: '80px 24px' }}
+            >
               <div style={{ width: '72px', height: '72px', borderRadius: '50%', backgroundColor: 'rgba(194,155,64,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px' }}>
                 <Check size={32} color="#C29B40" strokeWidth={1.5} />
               </div>
-              <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 'clamp(28px, 4vw, 44px)', fontStyle: 'italic', fontWeight: 300, color: '#002349', marginBottom: '20px' }}>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 'clamp(28px, 4vw, 48px)', fontStyle: 'italic', fontWeight: 300, color: '#002349', marginBottom: '20px' }}>
                 Request Received
               </h2>
               <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '16px', fontWeight: 300, color: '#666', lineHeight: 1.7, maxWidth: '480px', margin: '0 auto 40px' }}>
                 Jaime will personally review your property and reach out within 24 hours with a detailed market analysis.
               </p>
-              <a href={`tel:${JAIME.phone.replace(/\./g, '')}`} style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.20em', textTransform: 'uppercase', backgroundColor: '#002349', color: '#ffffff', textDecoration: 'none', padding: '18px 48px', display: 'inline-block' }}>
+              <a
+                href={`tel:${JAIME.phone.replace(/\./g, '')}`}
+                style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '0.20em', textTransform: 'uppercase', backgroundColor: '#002349', color: '#ffffff', textDecoration: 'none', padding: '18px 48px', display: 'inline-block' }}
+              >
                 Call {JAIME.phone}
               </a>
-            </div>
+            </motion.div>
           ) : (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+            <div style={{ backgroundColor: '#ffffff', boxShadow: '0 20px 60px rgba(0,35,73,0.10)', overflow: 'hidden' }}>
 
-              {/* Address */}
-              <div>
-                <span style={label}>Property Address *</span>
-                <input
-                  required
-                  style={underline}
-                  value={form.address}
-                  onChange={setInput('address')}
-                  placeholder="123 E Camelback Rd, Scottsdale, AZ 85251"
-                />
+              {/* Progress bar */}
+              <div style={{ height: '3px', backgroundColor: 'rgba(194,155,64,0.15)' }}>
+                <div style={{
+                  height: '100%', backgroundColor: '#C29B40',
+                  width: `${(step / 4) * 100}%`,
+                  transition: 'width 0.45s cubic-bezier(0.4,0,0.2,1)',
+                }} />
               </div>
 
-              {/* Timeline */}
-              <div>
-                <span style={{ ...label, marginBottom: '16px' }}>When are you thinking of selling?</span>
-                <PillGroup
-                  options={TIMELINES}
-                  value={form.timeline}
-                  onChange={v => setForm(f => ({ ...f, timeline: v }))}
-                />
+              {/* Step label */}
+              <div style={{ padding: isMobile ? '20px 24px 0' : '28px 56px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#bbb' }}>
+                  Step {step} of 4
+                </span>
+                <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#C29B40' }}>
+                  {stepTitles[step]}
+                </span>
               </div>
 
-              {/* Contact */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '32px' }}>
-                <div>
-                  <span style={label}>Your Name *</span>
-                  <input required style={underline} value={form.name} onChange={setInput('name')} placeholder="Jane Smith" />
+              {/* Animated step content */}
+              <div style={{ padding: isMobile ? '32px 24px 0' : '44px 56px 0', minHeight: '360px', position: 'relative', overflow: 'hidden' }}>
+                <AnimatePresence mode="wait" custom={direction}>
+                  <motion.div
+                    key={step}
+                    custom={direction}
+                    variants={variants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ duration: 0.28, ease: 'easeInOut' }}
+                  >
+                    <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 'clamp(26px, 4vw, 42px)', fontStyle: 'italic', fontWeight: 300, color: '#002349', margin: 0, marginBottom: '40px', lineHeight: 1.2 }}>
+                      {stepHeadings[step]}
+                    </h3>
+
+                    {/* Step 1: Address */}
+                    {step === 1 && (
+                      <div>
+                        <span style={labelStyle}>Property Address *</span>
+                        <input
+                          autoFocus
+                          style={underline}
+                          value={address}
+                          onChange={e => setAddress(e.target.value)}
+                          placeholder="123 E Camelback Rd, Scottsdale, AZ 85251"
+                          onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
+                          onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
+                        />
+                      </div>
+                    )}
+
+                    {/* Step 2: Timeline */}
+                    {step === 2 && (
+                      <div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          {TIMELINES.map(opt => {
+                            const sel = timeline === opt
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => setTimeline(opt)}
+                                style={{
+                                  fontFamily: "'Source Sans 3', sans-serif",
+                                  fontSize: '14px', fontWeight: sel ? 600 : 300,
+                                  textAlign: 'left', padding: '16px 20px',
+                                  border: `1px solid ${sel ? '#C29B40' : 'rgba(0,35,73,0.12)'}`,
+                                  backgroundColor: sel ? 'rgba(194,155,64,0.04)' : 'transparent',
+                                  color: sel ? '#002349' : '#555',
+                                  cursor: 'pointer',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                  transition: 'all 0.18s ease',
+                                }}
+                                onMouseEnter={e => { if (!sel) e.currentTarget.style.borderColor = 'rgba(194,155,64,0.50)' }}
+                                onMouseLeave={e => { if (!sel) e.currentTarget.style.borderColor = 'rgba(0,35,73,0.12)' }}
+                              >
+                                {opt}
+                                {sel && <Check size={14} color="#C29B40" strokeWidth={2.5} />}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 3: Contact */}
+                    {step === 3 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                        <div>
+                          <span style={labelStyle}>Full Name *</span>
+                          <input
+                            style={underline}
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            placeholder="Jane Smith"
+                            onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
+                            onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
+                          />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '24px' }}>
+                          <div>
+                            <span style={labelStyle}>Email</span>
+                            <input
+                              type="email"
+                              style={underline}
+                              value={email}
+                              onChange={e => setEmail(e.target.value)}
+                              placeholder="jane@example.com"
+                              onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
+                              onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
+                            />
+                          </div>
+                          <div>
+                            <span style={labelStyle}>Phone</span>
+                            <input
+                              type="tel"
+                              style={underline}
+                              value={phone}
+                              onChange={e => setPhone(e.target.value)}
+                              placeholder="(480) 000-0000"
+                              onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
+                              onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
+                            />
+                          </div>
+                        </div>
+                        <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 300, color: '#bbb', margin: 0, lineHeight: 1.6 }}>
+                          * We'll need at least one way to reach you — email or phone.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Step 4: Love Note */}
+                    {step === 4 && (
+                      <div>
+                        <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '14px', fontWeight: 300, color: '#999', lineHeight: 1.7, margin: '0 0 24px' }}>
+                          Optional — but Jaime loves knowing what makes a property special before writing the analysis.
+                        </p>
+                        <textarea
+                          value={loveNote}
+                          onChange={e => setLoveNote(e.target.value)}
+                          rows={4}
+                          placeholder="The backyard at sunset, the kitchen we renovated, walkable to everything..."
+                          style={{ ...underline, resize: 'vertical', paddingTop: '12px' }}
+                          onFocus={e => (e.currentTarget.style.borderBottomColor = '#002349')}
+                          onBlur={e  => (e.currentTarget.style.borderBottomColor = 'rgba(0,35,73,0.25)')}
+                        />
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Navigation */}
+              <div style={{
+                padding: isMobile ? '24px 24px 40px' : '32px 56px 48px',
+                display: 'flex',
+                justifyContent: step === 1 ? 'flex-end' : 'space-between',
+                alignItems: 'center',
+              }}>
+                {step > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => goTo((step - 1) as EvalStep, -1)}
+                    style={{
+                      fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 700,
+                      letterSpacing: '0.18em', textTransform: 'uppercase',
+                      color: '#aaa', background: 'none', border: 'none', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      transition: 'color 0.2s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#002349')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#aaa')}
+                  >
+                    <ChevronLeft size={14} strokeWidth={2} /> Back
+                  </button>
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                  {(step === 2 || step === 4) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (step === 2) goTo(3, 1)
+                        else handleSubmit()
+                      }}
+                      style={{
+                        fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 400,
+                        letterSpacing: '0.12em', textTransform: 'uppercase',
+                        color: '#bbb', background: 'none', border: 'none', cursor: 'pointer',
+                        transition: 'color 0.2s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.color = '#888')}
+                      onMouseLeave={e => (e.currentTarget.style.color = '#bbb')}
+                    >
+                      Skip
+                    </button>
+                  )}
+
+                  {step < 4 ? (
+                    <button
+                      type="button"
+                      onClick={() => canProceed && goTo((step + 1) as EvalStep, 1)}
+                      style={{
+                        fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 700,
+                        letterSpacing: '0.20em', textTransform: 'uppercase',
+                        backgroundColor: canProceed ? '#C29B40' : 'rgba(194,155,64,0.30)',
+                        color: '#ffffff', border: 'none',
+                        padding: '18px 44px', cursor: canProceed ? 'pointer' : 'default',
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        transition: 'background-color 0.2s ease',
+                      }}
+                      onMouseEnter={e => { if (canProceed) e.currentTarget.style.backgroundColor = 'rgba(194,155,64,0.85)' }}
+                      onMouseLeave={e => { if (canProceed) e.currentTarget.style.backgroundColor = '#C29B40' }}
+                    >
+                      Continue <ChevronRight size={14} strokeWidth={2} />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={handleSubmit}
+                      style={{
+                        fontFamily: "'Source Sans 3', sans-serif", fontSize: '11px', fontWeight: 700,
+                        letterSpacing: '0.20em', textTransform: 'uppercase',
+                        backgroundColor: loading ? 'rgba(0,35,73,0.25)' : '#002349',
+                        color: '#ffffff', border: 'none',
+                        padding: '18px 44px',
+                        cursor: loading ? 'default' : 'pointer',
+                        transition: 'background-color 0.2s ease',
+                      }}
+                      onMouseEnter={e => { if (!loading) e.currentTarget.style.backgroundColor = '#C29B40' }}
+                      onMouseLeave={e => { if (!loading) e.currentTarget.style.backgroundColor = '#002349' }}
+                    >
+                      {loading ? 'Sending…' : 'Get My Free Valuation'}
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <span style={label}>Email *</span>
-                  <input required type="email" style={underline} value={form.email} onChange={setInput('email')} placeholder="jane@example.com" />
-                </div>
-                <div>
-                  <span style={label}>Phone</span>
-                  <input type="tel" style={underline} value={form.phone} onChange={setInput('phone')} placeholder="(480) 000-0000" />
-                </div>
               </div>
-
-              {/* Notes */}
-              <div>
-                <span style={label}>Anything else? <span style={{ color: '#bbb', fontWeight: 300, letterSpacing: 0 }}>(optional)</span></span>
-                <textarea
-                  value={form.notes}
-                  onChange={setInput('notes')}
-                  rows={3}
-                  placeholder="Recent renovations, unique features, or any questions..."
-                  style={{ ...underline, resize: 'vertical', paddingTop: '12px' }}
-                />
-              </div>
-
-              {/* Love note — optional, placed after contact capture */}
-              <div>
-                <span style={label}>Why do you love your home? <span style={{ color: '#bbb', fontWeight: 300, letterSpacing: 0 }}>(optional)</span></span>
-                <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '13px', fontWeight: 300, color: '#aaa', lineHeight: 1.6, margin: '0 0 12px' }}>
-                  Jaime loves knowing what makes a property special before writing the analysis.
-                </p>
-                <textarea
-                  value={form.loveNote}
-                  onChange={setInput('loveNote')}
-                  rows={3}
-                  placeholder="The backyard at sunset, the kitchen we renovated, walkable to everything..."
-                  style={{ ...underline, resize: 'vertical', paddingTop: '12px' }}
-                />
-              </div>
-
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading || !form.name || !form.email || !form.address}
-                  style={{
-                    fontFamily: "'Source Sans 3', sans-serif",
-                    fontSize: '11px', fontWeight: 700,
-                    letterSpacing: '0.20em', textTransform: 'uppercase',
-                    backgroundColor: loading ? '#999' : '#002349',
-                    color: '#ffffff', border: 'none',
-                    padding: '22px 64px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    transition: 'background-color 0.2s ease',
-                  }}
-                  onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = '#C29B40' }}
-                  onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = '#002349' }}
-                >
-                  {loading ? 'Sending...' : 'Get My Free Valuation'}
-                </button>
-                <p style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: '12px', fontWeight: 300, color: '#999', marginTop: '16px' }}>
-                  No obligation. Your information is never sold or shared.
-                </p>
-              </div>
-
-            </form>
+            </div>
           )}
         </div>
       </section>

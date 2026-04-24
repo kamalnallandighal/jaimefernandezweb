@@ -24,6 +24,7 @@ import HomeEvalPage from '@/pages/HomeEvalPage'
 import BookACall from '@/pages/BookACall'
 import RestaurantGuidePage from '@/pages/RestaurantGuidePage'
 import LetsStayInTouch from '@/pages/LetsStayInTouch'
+import MagicZipPage from '@/pages/MagicZipPage'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -164,6 +165,7 @@ function AppShell() {
           <Route path="/book" element={<BookACall />} />
           <Route path="/dining-guide" element={<RestaurantGuidePage />} />
           <Route path="/stay-in-touch" element={<LetsStayInTouch />} />
+          <Route path="/85254" element={<MagicZipPage />} />
         </Routes>
     </>
   )
