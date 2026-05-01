@@ -177,9 +177,6 @@ export default function Blog() {
     ? posts.filter((_, i) => i !== (featuredIndex !== -1 ? featuredIndex : 0))
     : []
 
-  const featuredSmall = rest.slice(0, 4)
-  const secondaryFeed = rest.slice(4, 7)
-
 
 
   return (
@@ -219,41 +216,31 @@ export default function Blog() {
         {!loading && !error && posts.length > 0 && (
           <div style={{ maxWidth: '1280px', margin: '0 auto', padding: `40px ${hPad} 0` }}>
 
-            <>
-              {/* Asymmetric Featured Grid */}
-                <section style={{
+            {/* Hero post — full-width split card */}
+            {featuredLarge && (
+              <section style={{ marginBottom: '80px' }}>
+                <PostCard post={featuredLarge} size="large" />
+              </section>
+            )}
+
+            {/* Remaining posts — clean grid */}
+            {rest.length > 0 && (
+              <section style={{
+                borderTop: '1px solid rgba(0,0,0,0.06)',
+                paddingTop: '72px',
+                marginBottom: '96px',
+              }}>
+                <div style={{
                   display: 'grid',
-                  gridTemplateColumns: isDesktop && featuredSmall.length > 0 ? '55% 1fr' : '1fr',
-                  gap: isDesktop ? '64px' : '40px',
-                  marginBottom: '96px',
-                  alignItems: 'start',
+                  gridTemplateColumns: isDesktop ? 'repeat(3, 1fr)' : isTablet ? 'repeat(2, 1fr)' : '1fr',
+                  gap: '56px 40px',
                 }}>
-                  {featuredLarge && <PostCard post={featuredLarge} size="large" />}
-
-                  {featuredSmall.length > 0 && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 24px' }}>
-                      {featuredSmall.map(post => (
-                        <PostCard key={post.id} post={post} size="small" />
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                {/* Secondary 3-column feed */}
-                {secondaryFeed.length > 0 && (
-                  <section style={{
-                    borderTop: '1px solid rgba(0,0,0,0.06)',
-                    paddingTop: '80px',
-                    marginBottom: '96px',
-                  }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? 'repeat(3, 1fr)' : isTablet ? 'repeat(2, 1fr)' : '1fr', gap: '48px' }}>
-                      {secondaryFeed.map(post => (
-                        <PostCard key={post.id} post={post} size="grid" />
-                      ))}
-                    </div>
-                  </section>
-                )}
-            </>
+                  {rest.map(post => (
+                    <PostCard key={post.id} post={post} size="grid" />
+                  ))}
+                </div>
+              </section>
+            )}
 
           </div>
         )}
