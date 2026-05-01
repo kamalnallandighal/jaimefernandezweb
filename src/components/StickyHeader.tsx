@@ -42,8 +42,8 @@ export default function StickyHeader() {
           alignItems: 'center',
           paddingLeft: '48px',
           paddingRight: '48px',
-          paddingTop: '28px',
-          paddingBottom: '28px',
+          paddingTop: '10px',
+          paddingBottom: '10px',
         }}
         animate={{
           backgroundColor: isWhite ? '#ffffff' : 'rgba(0,0,0,0)',
@@ -182,7 +182,7 @@ export default function StickyHeader() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
             className="fixed left-0 right-0 z-40 md:hidden"
-            style={{ top: '96px', backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
+            style={{ top: '84px', backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', padding: '20px 32px 28px', gap: '18px' }}>
               {[{ label: 'Home', to: '/' }, { label: 'Blog', to: '/blog' }].map(({ label, to }) => (
